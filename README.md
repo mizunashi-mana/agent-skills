@@ -17,9 +17,14 @@ Install via Claude Code plugin marketplace:
 
 ```bash
 /plugin marketplace add mizunashi-mana/agent-skills
+/plugin install autodev
+/plugin install merge-dependabot-bump-pr
 ```
 
-Then browse and install available skill bundles.
+Available plugins:
+
+- `autodev` — AI agent development environment scaffolding (the `autodev-init` skill).
+- `merge-dependabot-bump-pr` — Dependabot bump PR review and merge.
 
 ## License
 
