@@ -8,22 +8,22 @@
 
 - リポジトリ作成
 - .ai-agent/ ディレクトリ構造の構築
-- steering ドキュメント（market.md, product.md, tech.md）の作成
+- steering ドキュメント 5 種（market.md, product.md, tech.md, plan.md, work.md）の作成
 
 ## 進行中
 
-- merge-dependabot-bump-pr スキルの移植（次タスク候補）
+- `.claude-plugin/marketplace.json` の作成（次タスク候補）
 
 ## ロードマップ
 
 ### Phase 1: スキル移植と公開準備
 
 - [x] dotfiles から autodev-init スキル＋テンプレート群を移植（2026-04-26）
-- [ ] dotfiles から merge-dependabot-bump-pr スキルを移植
+- [x] dotfiles から merge-dependabot-bump-pr スキルを移植（2026-04-26）
 - [ ] `.claude-plugin/marketplace.json` の作成
 - [ ] `template/SKILL.md` の作成
 - [x] CLAUDE.md / README.md / LICENSE の作成
-- [ ] GitHub リポジトリの公開
+- [x] GitHub リポジトリの公開
 
 ### Phase 2: 品質改善・標準化
 
