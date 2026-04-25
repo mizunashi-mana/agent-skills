@@ -53,7 +53,8 @@ agent-skills/
 │   │           ├── autodev-start-new-task/
 │   │           ├── autodev-steering/
 │   │           └── autodev-switch-to-default/
-│   └── merge-dependabot-bump-pr/       # 【未作成】Dependabot PR マージスキル（移植予定）
+│   └── merge-dependabot-bump-pr/       # Dependabot PR マージスキル
+│       └── SKILL.md                    # メインスキル（バージョンバンプ PR の安全性レビュー＋マージ）
 ├── .claude-plugin/                     # 【未作成】プラグインマーケットプレイス定義
 ├── template/                           # 【未作成】スキル作成テンプレート
 ├── CLAUDE.md                           # Claude Code 向けプロジェクトガイド
