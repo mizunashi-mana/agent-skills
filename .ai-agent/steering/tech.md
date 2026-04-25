@@ -49,6 +49,7 @@ agent-skills/
 ### プラグイン配布
 
 `.claude-plugin/marketplace.json` で以下のバンドルを定義:
+
 - **autodev**: autodev-init スキル（サブスキルテンプレートを含む）
 - **merge-dependabot-bump-pr**: Dependabot PR マージスキル
 
@@ -71,6 +72,18 @@ agent-skills/
 
 ## CI/CD
 
-現時点では未構成。将来的に以下を検討:
-- Markdown lint（markdownlint）
-- SKILL.md フロントマターのバリデーション
+GitHub Actions の `lint` ワークフロー（`.github/workflows/lint.yml`）を `pull_request` と `push: main` で実行する。以下の 2 ジョブで構成:
+
+- **markdownlint**: `markdownlint-cli2` を `npx` 経由で実行。ルールセットは `.markdownlint-cli2.yaml` に定義。日本語混在のため行長制限・コードブロック言語必須化などは無効化し、ヘッディング/リスト周りの整合性チェックを中心とする
+- **validate-skills**: `scripts/validate-skills.py`（Python + PyYAML）を実行。`plugins/**/SKILL.md` と `template/SKILL.md` のフロントマター（`description` 必須、`allowed-tools` / `disable-model-invocation` の型）と `.claude-plugin/marketplace.json` / `plugins/*/.claude-plugin/plugin.json` の JSON 妥当性を検証する
+
+ローカルで実行する場合:
+
+```bash
+# Markdown lint（Docker 経由）
+docker run --rm -v "$PWD":/workdir davidanson/markdownlint-cli2:latest
+
+# フロントマター・JSON 検証
+pip install pyyaml
+python3 scripts/validate-skills.py
+```

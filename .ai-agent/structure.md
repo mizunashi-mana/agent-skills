@@ -65,6 +65,12 @@ agent-skills/
 │               └── SKILL.md                                    # バージョンバンプ PR の安全性レビュー＋マージ
 ├── template/                                                   # スキル作成テンプレート
 │   └── SKILL.md                                                # YAML フロントマター + 本文セクション雛形
+├── scripts/                                                    # CI/CD 用スクリプト
+│   └── validate-skills.py                                      # SKILL.md フロントマター + plugin/marketplace JSON の検証
+├── .github/                                                    # GitHub 設定
+│   └── workflows/
+│       └── lint.yml                                            # markdownlint + validate-skills.py の CI ワークフロー
+├── .markdownlint-cli2.yaml                                     # markdownlint-cli2 設定
 ├── CLAUDE.md                                                   # Claude Code 向けプロジェクトガイド
 ├── README.md                                                   # プロジェクト説明（英語）
 └── LICENSE                                                     # ライセンスファイル
@@ -80,6 +86,7 @@ agent-skills/
 ### プラグインの構成
 
 各プラグインは `plugins/{plugin-name}/` ディレクトリに配置され、以下の構成:
+
 - `.claude-plugin/plugin.json`: プラグインメタデータ（`name`, `description`, `version`, `author`, ...）
 - `skills/{skill-name}/SKILL.md`: スキル本体（YAML フロントマター + Markdown 本文）
 - スキル配下の任意リソース: `templates/`, `scripts/`, `reference/` 等

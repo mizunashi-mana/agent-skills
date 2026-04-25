@@ -1,0 +1,51 @@
+# markdownlint-cli2 configuration
+# https://github.com/DavidAnson/markdownlint-cli2
+
+config:
+  # Default ruleset reference: https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md
+  default: true
+
+  # MD013: line-length — disabled. Mixed-language (Japanese + English + code) docs
+  # have variable visual width and a hard column limit causes more harm than good.
+  MD013: false
+
+  # MD024: no-duplicate-heading — allow same heading text under different parents.
+  # Templates and steering docs reuse subsection labels (例: 「概要」「手順」) intentionally.
+  MD024:
+    siblings_only: true
+
+  # MD026: trailing-punctuation — allow `?` for question-style headings ("What is this?").
+  # Default ".,;:" preserved; `!` and `?` removed from the disallowed set.
+  MD026:
+    punctuation: ".,;:"
+
+  # MD033: no-inline-html — allow HTML comments and minor inline tags. SKILL templates
+  # use <!-- placeholders --> as guidance for skill authors.
+  MD033:
+    allowed_elements:
+      - "!--"
+      - br
+      - details
+      - summary
+
+  # MD040: fenced-code-language — disabled. Many existing examples are plain text
+  # ASCII trees / generic shell snippets that don't fit a clean language tag.
+  MD040: false
+
+  # MD041: first-line-h1 — disabled. Files with YAML frontmatter (SKILL.md) have
+  # the H1 after the frontmatter block, which markdownlint mis-detects.
+  MD041: false
+
+  # MD060: table-column-style — disabled. We use compact pipe tables without
+  # surrounding spaces in some places, which is a stylistic choice not a bug.
+  MD060: false
+
+# Glob patterns evaluated relative to this config file's directory.
+globs:
+  - "**/*.md"
+
+ignores:
+  - "node_modules/**"
+  - ".git/**"
+  # Local-only skill variants — not part of the published catalog.
+  - "**/*.local.md"
