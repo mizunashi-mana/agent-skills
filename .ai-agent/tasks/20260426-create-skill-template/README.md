@@ -29,7 +29,7 @@
 - [x] テンプレート内に、スキル作成時の注意事項（description の書き方、tool 列挙の形式など）が記載されている
 - [x] `.ai-agent/structure.md` から「【未作成】」表記が削除され、`template/SKILL.md` への言及が追加されている
 - [x] `.ai-agent/steering/plan.md` の該当タスクがチェック済みに更新されている
-- [ ] PR が作成されている
+- [x] PR が作成されている
 
 ## 作業ログ
 
@@ -39,3 +39,4 @@
 - 2026-04-26: `template/SKILL.md` を作成（YAML フロントマター 3 フィールド + 本文 4 セクション）
 - 2026-04-26: `.ai-agent/structure.md` から「【未作成】」表記を削除し、`template/SKILL.md` の説明を追記
 - 2026-04-26: `.ai-agent/steering/plan.md` の該当チェックを完了に更新
+- 2026-04-26: PR #3 を作成（https://github.com/mizunashi-mana/agent-skills/pull/3）
