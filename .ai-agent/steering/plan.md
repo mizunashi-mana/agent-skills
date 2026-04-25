@@ -8,7 +8,7 @@
 
 - リポジトリ作成
 - .ai-agent/ ディレクトリ構造の構築
-- steering ドキュメント（market.md, product.md, tech.md）の作成
+- steering ドキュメント 5 種（market.md, product.md, tech.md, plan.md, work.md）の作成
 
 ## 進行中
 
@@ -23,7 +23,7 @@
 - [ ] `.claude-plugin/marketplace.json` の作成
 - [ ] `template/SKILL.md` の作成
 - [x] CLAUDE.md / README.md / LICENSE の作成
-- [ ] GitHub リポジトリの公開
+- [x] GitHub リポジトリの公開
 
 ### Phase 2: 品質改善・標準化
 
