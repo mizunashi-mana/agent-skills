@@ -63,7 +63,8 @@ agent-skills/
 │       └── skills/
 │           └── merge-dependabot-bump-pr/
 │               └── SKILL.md                                    # バージョンバンプ PR の安全性レビュー＋マージ
-├── template/                                                   # 【未作成】スキル作成テンプレート
+├── template/                                                   # スキル作成テンプレート
+│   └── SKILL.md                                                # YAML フロントマター + 本文セクション雛形
 ├── CLAUDE.md                                                   # Claude Code 向けプロジェクトガイド
 ├── README.md                                                   # プロジェクト説明（英語）
 └── LICENSE                                                     # ライセンスファイル

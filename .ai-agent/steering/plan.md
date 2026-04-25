@@ -12,7 +12,7 @@
 
 ## 進行中
 
-- `template/SKILL.md` の作成（次タスク候補）
+- （次タスク候補は未定）
 
 ## ロードマップ
 
@@ -21,7 +21,7 @@
 - [x] dotfiles から autodev-init スキル＋テンプレート群を移植（2026-04-26）
 - [x] dotfiles から merge-dependabot-bump-pr スキルを移植（2026-04-26）
 - [x] `.claude-plugin/marketplace.json` の作成と plugins/ 配下への再構成（2026-04-26）
-- [ ] `template/SKILL.md` の作成
+- [x] `template/SKILL.md` の作成（2026-04-26）
 - [x] CLAUDE.md / README.md / LICENSE の作成
 - [x] GitHub リポジトリの公開
 
