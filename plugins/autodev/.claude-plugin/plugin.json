@@ -1,0 +1,13 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "autodev",
+  "description": "Interactively initialize a repository's AI agent development environment: steering documents, workflow skills, and structure documentation.",
+  "version": "0.1.0",
+  "author": {
+    "name": "mizunashi-mana",
+    "url": "https://github.com/mizunashi-mana"
+  },
+  "homepage": "https://github.com/mizunashi-mana/agent-skills",
+  "repository": "https://github.com/mizunashi-mana/agent-skills",
+  "license": "Apache-2.0 OR MPL-2.0"
+}

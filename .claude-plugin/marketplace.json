@@ -1,0 +1,39 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "agent-skills",
+  "description": "A curated collection of AI agent skills for software development workflows. Includes the autodev environment bootstrapper and the Dependabot bump PR reviewer.",
+  "owner": {
+    "name": "mizunashi-mana",
+    "url": "https://github.com/mizunashi-mana"
+  },
+  "plugins": [
+    {
+      "name": "autodev",
+      "description": "Interactively initialize a repository's AI agent development environment: steering documents, workflow skills, and structure documentation.",
+      "version": "0.1.0",
+      "author": {
+        "name": "mizunashi-mana",
+        "url": "https://github.com/mizunashi-mana"
+      },
+      "source": "./plugins/autodev",
+      "category": "development",
+      "homepage": "https://github.com/mizunashi-mana/agent-skills/tree/main/plugins/autodev",
+      "license": "Apache-2.0 OR MPL-2.0",
+      "keywords": ["autodev", "steering", "ai-agent", "workflow", "scaffolding"]
+    },
+    {
+      "name": "merge-dependabot-bump-pr",
+      "description": "Review and merge Dependabot version bump PRs with 4-point safety checks (release age, critical bugs, breaking changes, source diff).",
+      "version": "0.1.0",
+      "author": {
+        "name": "mizunashi-mana",
+        "url": "https://github.com/mizunashi-mana"
+      },
+      "source": "./plugins/merge-dependabot-bump-pr",
+      "category": "productivity",
+      "homepage": "https://github.com/mizunashi-mana/agent-skills/tree/main/plugins/merge-dependabot-bump-pr",
+      "license": "Apache-2.0 OR MPL-2.0",
+      "keywords": ["dependabot", "pull-request", "dependency-management", "review"]
+    }
+  ]
+}

@@ -9,40 +9,56 @@
 
 ## アーキテクチャ概要
 
-スキルコレクション型リポジトリ。各スキルは `skills/` 配下にディレクトリとして配置され、`SKILL.md` と関連リソース（テンプレート、プロンプト等）で構成される。
+プラグインコレクション型リポジトリ。Claude Code のプラグインマーケットプレイス仕様に従い、各プラグインは `plugins/<plugin-name>/` 配下に `.claude-plugin/plugin.json` と `skills/<skill-name>/SKILL.md`（および任意のリソース）で構成される。
 
 ### リポジトリ構成
 
 ```
 agent-skills/
 ├── .claude-plugin/
-│   └── marketplace.json       # プラグインバンドル定義
-├── skills/
-│   ├── autodev-init/          # リポジトリ初期化スキル
-│   │   ├── SKILL.md
-│   │   └── templates/         # steering/スキルテンプレート
-│   └── merge-dependabot-bump-pr/
-│       └── SKILL.md
+│   └── marketplace.json                                        # プラグインバンドル定義
+├── plugins/
+│   ├── autodev/                                                # autodev プラグイン
+│   │   ├── .claude-plugin/plugin.json
+│   │   └── skills/
+│   │       └── autodev-init/                                   # リポジトリ初期化スキル
+│   │           ├── SKILL.md
+│   │           └── templates/                                  # steering / サブスキルテンプレート
+│   └── merge-dependabot-bump-pr/                               # merge-dependabot-bump-pr プラグイン
+│       ├── .claude-plugin/plugin.json
+│       └── skills/
+│           └── merge-dependabot-bump-pr/
+│               └── SKILL.md
 ├── template/
-│   └── SKILL.md               # スキル作成用テンプレート
+│   └── SKILL.md                                                # スキル作成用テンプレート
 ├── CLAUDE.md
 ├── README.md
 └── LICENSE
 ```
 
-### スキルの構造
+### プラグインの構造
 
-各スキルは anthropics/skills の規約に従う:
+各プラグインは Claude Code プラグイン規約（anthropics/claude-plugins-public 参照）に従う:
 
-1. **SKILL.md**: YAML フロントマター（`name`, `description`）＋ Markdown 本文
-2. **リソースディレクトリ**（任意）: `templates/`, `scripts/`, `reference/` 等
-3. **LICENSE.txt**（任意）: スキル個別のライセンス
+1. **`.claude-plugin/plugin.json`**: プラグインメタデータ（`name`, `description`, `version`, `author` 等）
+2. **`skills/<skill-name>/SKILL.md`**: プラグインに含まれるスキル本体（YAML フロントマター + Markdown 本文）
+3. **リソースディレクトリ**（任意）: 各スキル配下の `templates/`, `scripts/`, `reference/` 等
+
+スキル定義（`SKILL.md`）は agentskills.io の Agent Skills 仕様に準拠する。
 
 ### プラグイン配布
 
 `.claude-plugin/marketplace.json` で以下のバンドルを定義:
 - **autodev**: autodev-init スキル（サブスキルテンプレートを含む）
 - **merge-dependabot-bump-pr**: Dependabot PR マージスキル
+
+利用者は次の手順でインストールできる:
+
+```
+/plugin marketplace add mizunashi-mana/agent-skills
+/plugin install autodev
+/plugin install merge-dependabot-bump-pr
+```
 
 ## 開発環境
 
