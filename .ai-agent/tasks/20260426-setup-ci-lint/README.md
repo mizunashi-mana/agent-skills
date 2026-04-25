@@ -78,7 +78,7 @@ JSON バリデーション対象:
 - [x] `tech.md` の CI/CD セクションが更新済み
 - [x] `structure.md` に `.github/` と `scripts/` が追記済み
 - [x] `plan.md` のチェックボックスが完了に更新
-- [ ] PR が作成され、CI が緑になっていることを確認
+- [x] PR が作成され、CI が緑になっていることを確認
 
 ## 作業ログ
 
@@ -92,3 +92,4 @@ JSON バリデーション対象:
 - 2026-04-26: ローカルで markdownlint-cli2（Docker 経由）と validate-skills.py を実行し、全 42 ファイル / 17 SKILL.md が通過することを確認
 - 2026-04-26: わざと壊したフロントマター（description 欠落、型違反、未知フィールド）を検出することを `--root` オプションで確認、exit 1 となることを検証
 - 2026-04-26: `tech.md` CI/CD セクションを更新、`structure.md` に scripts/.github/.markdownlint-cli2.yaml を追記、`plan.md` のチェックを完了に更新
+- 2026-04-26: PR #4 を作成（<https://github.com/mizunashi-mana/agent-skills/pull/4>）、CI 2 ジョブとも success を確認
