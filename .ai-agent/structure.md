@@ -19,6 +19,7 @@ agent-skills/
 │   ├── projects/                                               # 長期プロジェクト管理
 │   ├── tasks/                                                  # 個別タスク管理
 │   └── surveys/                                                # 技術調査・検討
+│       └── 20260426-claude-code-best-practices/                # Claude Code ベストプラクティス調査（agent-coach の根拠リファレンス）
 ├── .claude/                                                    # Claude Code 設定
 │   ├── settings.local.json                                     # ローカル設定
 │   └── skills/                                                 # 開発用スキル（autodev シリーズ）
