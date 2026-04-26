@@ -19,6 +19,7 @@ agent-skills/
 │   ├── projects/                                               # 長期プロジェクト管理
 │   ├── tasks/                                                  # 個別タスク管理
 │   └── surveys/                                                # 技術調査・検討
+│       └── 20260426-claude-code-best-practices/                # Claude Code ベストプラクティス調査（agent-coach の根拠リファレンス）
 ├── .claude/                                                    # Claude Code 設定
 │   ├── settings.local.json                                     # ローカル設定
 │   └── skills/                                                 # 開発用スキル（autodev シリーズ）
@@ -58,11 +59,16 @@ agent-skills/
 │   │                   ├── autodev-start-new-task/
 │   │                   ├── autodev-steering/
 │   │                   └── autodev-switch-to-default/
-│   └── merge-dependabot-bump-pr/                               # merge-dependabot-bump-pr プラグイン
+│   ├── merge-dependabot-bump-pr/                               # merge-dependabot-bump-pr プラグイン
+│   │   ├── .claude-plugin/plugin.json
+│   │   └── skills/
+│   │       └── merge-dependabot-bump-pr/
+│   │           └── SKILL.md                                    # バージョンバンプ PR の安全性レビュー＋マージ
+│   └── agent-coach/                                            # agent-coach プラグイン
 │       ├── .claude-plugin/plugin.json
 │       └── skills/
-│           └── merge-dependabot-bump-pr/
-│               └── SKILL.md                                    # バージョンバンプ PR の安全性レビュー＋マージ
+│           └── agent-coach/
+│               └── SKILL.md                                    # transcript 分析によるプロンプト・スキル・メモリ改善提案
 ├── template/                                                   # スキル作成テンプレート
 │   └── SKILL.md                                                # YAML フロントマター + 本文セクション雛形
 ├── schemas/                                                    # JSON Schema 定義
