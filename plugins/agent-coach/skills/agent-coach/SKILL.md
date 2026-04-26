@@ -21,7 +21,7 @@ allowed-tools: Bash, Read, Glob, Grep, WebFetch
 
 - macOS / Linux 環境（transcript パスは `~/.claude/projects/<encoded-cwd>/<session-id>.jsonl`）
 - 分析対象セッションが少なくとも 1 件存在すること
-- WebFetch が許可されていること（Anthropic 公式ドキュメント参照のため）
+- （任意）WebFetch が利用できれば、Anthropic 公式ドキュメントを参照して提案の根拠を強化できる。利用不可でも分析自体は実施可能
 
 ## 手順
 
@@ -29,7 +29,7 @@ allowed-tools: Bash, Read, Glob, Grep, WebFetch
 
 ユーザーから対象指定があれば従う。指定がなければ以下のデフォルトで進める:
 
-- **対象プロジェクト**: 現在の cwd を `/` → `-` 変換した `~/.claude/projects/-Users-...-<repo>/` ディレクトリ
+- **対象プロジェクト**: 現在の cwd に対応する `~/.claude/projects/<encoded-cwd>/` ディレクトリ。エンコーディングは概ね `/` → `-` の置換だが、`.`・`_`・大文字・Unicode 等の扱いはバージョン依存で確実ではないため、`ls ~/.claude/projects/ | grep <repo-basename>` または `Glob` で実在ディレクトリを特定するのを推奨
 - **対象セッション**: そのディレクトリ配下の最新 3 セッション（mtime 降順）の `.jsonl`
 - **除外**: agent-coach 実行中のセッション。Claude は自分の `sessionId` を直接取れないため、ヒューリスティックとして **mtime が最新（実行中に書き込まれているもの）の jsonl を 1 件除外** する。ただしユーザーが「直近のやり取りを見て」等と現在セッションを明示対象にした場合は除外しない
 
@@ -116,7 +116,7 @@ allowed-tools: Bash, Read, Glob, Grep, WebFetch
 
 #### 観点 4: コンテキストロット
 
-検出シグナル:
+検出シグナル（以下はあくまで目安。長い設計議論セッションなど、ターン数や応答サイズが大きくても問題ない場合もあるので、シグナル単体での断定は避ける）:
 
 - 1 セッションのターン数が 50 を超える
 - 後半で初期指示・初期ファイルへの参照が消失する（同じファイルを Read し直す等）
@@ -134,7 +134,7 @@ allowed-tools: Bash, Read, Glob, Grep, WebFetch
 
 手順:
 
-1. 当該セッション内で配布された利用可能スキル一覧を `<system-reminder>` から抽出（`The following skills are available for use with the Skill tool:` の節を grep）
+1. 当該セッション内の `type == "system"` エントリ（または `user` メッセージの `tool_result.content`）から、`The following skills are available for use with the Skill tool:` で始まる節を抽出して利用可能スキル一覧を取得する。`type` を絞らず全行 grep するとヒット数が膨らみトークンを浪費するので注意
 2. ユーザーの各リクエストについて、本来トリガすべきスキル候補を判定
 3. 実際に `Skill` ツールが呼ばれたかを確認
 4. 未起動だったケースを抽出
