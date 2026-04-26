@@ -82,7 +82,7 @@ skills/autodev-init/skills/autodev-init/SKILL.md  # 重複 or 移動
 
 - 2026-04-26: タスク作成、構造選択肢を整理
 - 2026-04-26: ユーザー承認のもと Option A（plugins/ 配下に再構成）+ 2 バンドル構成を採用
-- 2026-04-26: `git mv` で skills/ → plugins/<plugin>/skills/<skill>/ へ再構成
+- 2026-04-26: `git mv` で `skills/` → `plugins/{plugin}/skills/{skill}/` へ再構成
 - 2026-04-26: `plugins/autodev/.claude-plugin/plugin.json` と `plugins/merge-dependabot-bump-pr/.claude-plugin/plugin.json` を作成
 - 2026-04-26: `.claude-plugin/marketplace.json` を作成（autodev / merge-dependabot-bump-pr の 2 プラグインを登録）
 - 2026-04-26: `tech.md` / `structure.md` / `plan.md` / `README.md` を新構造に合わせて更新

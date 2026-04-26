@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mizunashi-mana/agent-skills/blob/main/schemas/marketplace.schema.json",
+  "title": "Claude Code Plugin Marketplace",
+  "description": "Schema for `.claude-plugin/marketplace.json`. Source: https://code.claude.com/docs/en/plugin-marketplaces",
+  "type": "object",
+  "required": ["name", "owner", "plugins"],
+  "additionalProperties": true,
+  "properties": {
+    "$schema": { "type": "string" },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Marketplace identifier (kebab-case, no spaces)"
+    },
+    "description": { "type": "string" },
+    "owner": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": true,
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "url": { "type": "string", "format": "uri" }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "description": { "type": "string" },
+        "version": { "type": "string" },
+        "pluginRoot": { "type": "string" }
+      }
+    },
+    "allowCrossMarketplaceDependenciesOn": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "plugins": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/pluginEntry" }
+    }
+  },
+  "$defs": {
+    "person": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": true,
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "url": { "type": "string", "format": "uri" }
+      }
+    },
+    "pluginEntry": {
+      "type": "object",
+      "required": ["name", "source"],
+      "additionalProperties": true,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "source": { "$ref": "#/$defs/pluginSource" },
+        "description": { "type": "string" },
+        "version": { "type": "string" },
+        "author": { "$ref": "#/$defs/person" },
+        "homepage": { "type": "string", "format": "uri" },
+        "repository": { "type": "string", "format": "uri" },
+        "license": { "type": "string" },
+        "keywords": { "type": "array", "items": { "type": "string" } },
+        "category": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "strict": { "type": "boolean" }
+      }
+    },
+    "pluginSource": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^\\./",
+          "description": "Relative path to a plugin within the marketplace repo"
+        },
+        {
+          "type": "object",
+          "required": ["source"],
+          "oneOf": [
+            {
+              "properties": {
+                "source": { "const": "github" },
+                "repo": { "type": "string", "pattern": "^[^/]+/[^/]+$" },
+                "ref": { "type": "string" },
+                "sha": { "type": "string", "pattern": "^[0-9a-f]{40}$" }
+              },
+              "required": ["source", "repo"]
+            },
+            {
+              "properties": {
+                "source": { "const": "url" },
+                "url": { "type": "string", "format": "uri" },
+                "ref": { "type": "string" },
+                "sha": { "type": "string", "pattern": "^[0-9a-f]{40}$" }
+              },
+              "required": ["source", "url"]
+            },
+            {
+              "properties": {
+                "source": { "const": "git-subdir" },
+                "url": { "type": "string", "format": "uri" },
+                "path": { "type": "string" },
+                "ref": { "type": "string" },
+                "sha": { "type": "string", "pattern": "^[0-9a-f]{40}$" }
+              },
+              "required": ["source", "url", "path"]
+            },
+            {
+              "properties": {
+                "source": { "const": "npm" },
+                "package": { "type": "string" },
+                "version": { "type": "string" },
+                "registry": { "type": "string" }
+              },
+              "required": ["source", "package"]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

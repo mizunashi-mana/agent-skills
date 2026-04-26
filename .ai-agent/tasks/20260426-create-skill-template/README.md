@@ -39,4 +39,4 @@
 - 2026-04-26: `template/SKILL.md` を作成（YAML フロントマター 3 フィールド + 本文 4 セクション）
 - 2026-04-26: `.ai-agent/structure.md` から「【未作成】」表記を削除し、`template/SKILL.md` の説明を追記
 - 2026-04-26: `.ai-agent/steering/plan.md` の該当チェックを完了に更新
-- 2026-04-26: PR #3 を作成（https://github.com/mizunashi-mana/agent-skills/pull/3）
+- 2026-04-26: PR #3 を作成（<https://github.com/mizunashi-mana/agent-skills/pull/3>）

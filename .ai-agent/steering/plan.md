@@ -30,7 +30,7 @@
 - [ ] agentskills.io 仕様への準拠確認・調整
 - [ ] クロスプラットフォーム対応の検討（.codex, .cursor-plugin 等）
 - [ ] スキル評価（evals）の導入
-- [ ] CI/CD（Markdown lint、フロントマターバリデーション）の構築
+- [x] CI/CD（Markdown lint、フロントマターバリデーション）の構築（2026-04-26）
 
 ### Phase 3: スキル拡充
 

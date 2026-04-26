@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mizunashi-mana/agent-skills/blob/main/schemas/plugin.schema.json",
+  "title": "Claude Code Plugin Manifest",
+  "description": "Schema for `.claude-plugin/plugin.json`. Source: https://code.claude.com/docs/en/plugins-reference#plugin-manifest-schema",
+  "type": "object",
+  "required": ["name"],
+  "additionalProperties": true,
+  "properties": {
+    "$schema": { "type": "string" },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Unique identifier (kebab-case, no spaces)"
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version (optional). If omitted, falls back to git commit SHA."
+    },
+    "description": { "type": "string" },
+    "author": { "$ref": "#/$defs/person" },
+    "homepage": { "type": "string", "format": "uri" },
+    "repository": { "type": "string", "format": "uri" },
+    "license": { "type": "string" },
+    "keywords": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "skills": { "$ref": "#/$defs/pathOrArray" },
+    "commands": { "$ref": "#/$defs/pathOrArray" },
+    "agents": { "$ref": "#/$defs/pathOrArray" },
+    "hooks": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } },
+        { "type": "object" }
+      ]
+    },
+    "mcpServers": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } },
+        { "type": "object" }
+      ]
+    },
+    "outputStyles": { "$ref": "#/$defs/pathOrArray" },
+    "themes": { "$ref": "#/$defs/pathOrArray" },
+    "lspServers": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } },
+        { "type": "object" }
+      ]
+    },
+    "monitors": { "$ref": "#/$defs/pathOrArray" },
+    "userConfig": { "type": "object" },
+    "channels": { "type": "array" },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          { "type": "string" },
+          {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "version": { "type": "string" }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "person": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": true,
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "url": { "type": "string", "format": "uri" }
+      }
+    },
+    "pathOrArray": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ]
+    }
+  }
+}
