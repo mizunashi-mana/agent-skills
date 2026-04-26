@@ -72,18 +72,19 @@ agent-skills/
 
 ## CI/CD
 
-GitHub Actions の `lint` ワークフロー（`.github/workflows/lint.yml`）を `pull_request` と `push: main` で実行する。以下の 2 ジョブで構成:
+GitHub Actions の `lint` ワークフロー（`.github/workflows/lint.yml`）を `pull_request` と `push: main` で実行する。
 
-- **markdownlint**: `markdownlint-cli2` を `npx` 経由で実行。ルールセットは `.markdownlint-cli2.yaml` に定義。日本語混在のため行長制限・コードブロック言語必須化などは無効化し、ヘッディング/リスト周りの整合性チェックを中心とする
-- **validate-skills**: `scripts/validate-skills.py`（Python + PyYAML）を実行。`plugins/**/SKILL.md` と `template/SKILL.md` のフロントマター（`description` 必須、`allowed-tools` / `disable-model-invocation` の型）と `.claude-plugin/marketplace.json` / `plugins/*/.claude-plugin/plugin.json` の JSON 妥当性を検証する
+**validate-skills ジョブ**: `scripts/validate-skills.py` を実行。以下を検証する:
+
+- `plugins/**/SKILL.md` と `template/SKILL.md` のフロントマター（`python-frontmatter` で抽出 → 内蔵スキーマで検証）。`description` 必須、`allowed-tools` / `disable-model-invocation` の型、未知フィールド検出
+- `plugins/*/.claude-plugin/plugin.json` を `schemas/plugin.schema.json`（公式プラグイン仕様準拠）で検証
+- `.claude-plugin/marketplace.json` を `schemas/marketplace.schema.json`（公式マーケットプレイス仕様準拠）で検証
+
+JSON Schema 検証は `jsonschema` ライブラリを使用。スキーマは公式ドキュメント（[plugin manifest](https://code.claude.com/docs/en/plugins-reference#plugin-manifest-schema) / [marketplace schema](https://code.claude.com/docs/en/plugin-marketplaces)）から起こしたもので、本リポジトリで管理する。
 
 ローカルで実行する場合:
 
 ```bash
-# Markdown lint（Docker 経由）
-docker run --rm -v "$PWD":/workdir davidanson/markdownlint-cli2:latest
-
-# フロントマター・JSON 検証
-pip install pyyaml
+pip install -r scripts/requirements.txt
 python3 scripts/validate-skills.py
 ```

@@ -65,12 +65,15 @@ agent-skills/
 │               └── SKILL.md                                    # バージョンバンプ PR の安全性レビュー＋マージ
 ├── template/                                                   # スキル作成テンプレート
 │   └── SKILL.md                                                # YAML フロントマター + 本文セクション雛形
+├── schemas/                                                    # JSON Schema 定義
+│   ├── plugin.schema.json                                      # plugin.json 用（公式プラグイン仕様準拠）
+│   └── marketplace.schema.json                                 # marketplace.json 用（公式マーケットプレイス仕様準拠）
 ├── scripts/                                                    # CI/CD 用スクリプト
-│   └── validate-skills.py                                      # SKILL.md フロントマター + plugin/marketplace JSON の検証
+│   ├── requirements.txt                                        # python-frontmatter, jsonschema
+│   └── validate-skills.py                                      # SKILL.md frontmatter + plugin/marketplace JSON の検証
 ├── .github/                                                    # GitHub 設定
 │   └── workflows/
-│       └── lint.yml                                            # markdownlint + validate-skills.py の CI ワークフロー
-├── .markdownlint-cli2.yaml                                     # markdownlint-cli2 設定
+│       └── lint.yml                                            # validate-skills.py を実行する CI ワークフロー
 ├── CLAUDE.md                                                   # Claude Code 向けプロジェクトガイド
 ├── README.md                                                   # プロジェクト説明（英語）
 └── LICENSE                                                     # ライセンスファイル

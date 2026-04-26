@@ -1,14 +1,16 @@
-# タスク: CI/CD（Markdown lint・フロントマターバリデーション）の構築
+# タスク: CI/CD（フロントマター・JSON Schema バリデーション）の構築
 
 ## 目的・ゴール
 
 リポジトリに最低限の CI を導入し、PR・main への push で以下が自動チェックされる状態にする:
 
-1. Markdown ファイルが lint ルールに沿っている
-2. `SKILL.md` の YAML フロントマターが規約どおり（必須フィールド・型）
-3. `plugin.json` / `marketplace.json` が有効な JSON である
+1. `SKILL.md` の YAML フロントマターが規約どおり（`description` 必須、型チェック、未知フィールド検出）
+2. `plugin.json` が JSON Schema（公式プラグイン仕様準拠）を満たす
+3. `marketplace.json` が JSON Schema（公式マーケットプレイス仕様準拠）を満たす
 
 これにより、新規スキル追加時の規約逸脱を機械的に検出できるようにする。
+
+> **方針メモ**: 当初は markdownlint も含めていたが、ユーザーフィードバックにより削除。フロントマター抽出は `python-frontmatter`、JSON 検証は `jsonschema` ライブラリを採用し、自前パーサや手書き型チェックを廃止した。
 
 ## 背景
 
@@ -21,62 +23,52 @@
 
 ### 1. ツール選定
 
-- **Markdown lint**: `markdownlint-cli2`（業界標準・高速・設定柔軟）
-- **フロントマターバリデーション**: Python 標準ライブラリ（`yaml`/`json`）でシンプルなスクリプトを自前で書く
-  - 外部依存を最小化する（PyYAML のみ追加）
-  - スクリプトは `scripts/validate-skills.py` 等に配置
+- **フロントマター抽出**: `python-frontmatter`（YAML フロントマター + Markdown 本文をパースする標準ライブラリ）
+- **JSON Schema 検証**: `jsonschema`（Python の標準的な JSON Schema バリデータ）
 - **CI**: GitHub Actions（`.github/workflows/lint.yml`）
+- 依存は `scripts/requirements.txt` で管理
 
-### 2. Markdown lint の設定
+### 2. JSON Schema の作成
 
-- `.markdownlint-cli2.yaml`（または `.markdownlint.json`）でルールセットを設定
-- 既存の Markdown が大量に存在するため、まずは緩めのルールで開始
-  - 行の長さ制限は無効化（日本語混在のため）
-  - インラインHTML は許容（`<!-- -->` コメント等）
-  - 重複見出しは許容（章レベルで似た見出しが頻出するため）
-- 既存ファイルが lint を通る最小ルールセットから出発し、必要に応じて段階的に強化
+公式スキーマ（`https://anthropic.com/claude-code/*.schema.json`）は未公開のため、ドキュメント仕様（`code.claude.com/docs/en/plugins-reference` / `plugin-marketplaces`）から起こして `schemas/` 配下で管理する:
 
-### 3. フロントマターバリデーション
+- `schemas/plugin.schema.json`: `name`（必須・kebab-case）、`version`/`description`/`author`/`homepage`/`repository`/`license`/`keywords` その他のメタデータと、`skills`/`commands`/`agents`/`hooks`/`mcpServers` 等のコンポーネントパスフィールド
+- `schemas/marketplace.schema.json`: `name`（必須・kebab-case）、`owner`（必須・`name` 必須）、`plugins[]`（必須）。各 plugin entry は `name` + `source` 必須、`source` は relative path / github / url / git-subdir / npm の 5 種類
 
-対象: `plugins/**/SKILL.md`、`template/SKILL.md`
+JSON Schema Draft 2020-12 を採用。`additionalProperties: true` でフォワードコンパチビリティを保つ。
 
-検証項目:
+### 3. フロントマター検証
 
-- [ ] YAML フロントマターが存在し、パース可能
-- [ ] `description` が必須・非空文字列
-- [ ] `allowed-tools` がある場合は文字列
-- [ ] `disable-model-invocation` がある場合はブーリアン
-- [ ] 想定外のキーがあれば警告（厳格にエラーにはしない）
+対象: `plugins/**/SKILL.md`、`template/SKILL.md`（`*.local.md` は除外）
 
-JSON バリデーション対象:
+スクリプト内蔵の JSON Schema で検証:
 
-- `.claude-plugin/marketplace.json`
-- `plugins/*/.claude-plugin/plugin.json`
+- `description`: 必須、非空文字列
+- `allowed-tools`: 任意、文字列
+- `disable-model-invocation`: 任意、ブーリアン
+- 未知フィールドはエラー（`additionalProperties: false`）
 
 ### 4. GitHub Actions workflow
 
 `.github/workflows/lint.yml`:
 
 - トリガー: `pull_request` と `push: branches: [main]`
-- ジョブ:
-  - `markdownlint`: Node.js セットアップ → `markdownlint-cli2` 実行
-  - `validate-skills`: Python セットアップ → 検証スクリプト実行
+- 単一ジョブ `validate-skills`: Python セットアップ → `pip install -r scripts/requirements.txt` → `python3 scripts/validate-skills.py`
 
 ### 5. ドキュメント更新
 
 - `tech.md`: CI/CD セクションを「構成済み」に更新し、構成内容を記載
-- `structure.md`: `.github/`・`scripts/` ディレクトリの追記
+- `structure.md`: `.github/`・`scripts/`・`schemas/` ディレクトリの追記
 - `plan.md`: 該当チェックボックスを完了に更新
-- `README.md`: バッジ追加（任意）
 
 ## 完了条件
 
-- [x] `.github/workflows/lint.yml` が作成され、ローカルで構文確認できる
-- [x] `.markdownlint-cli2.yaml`（または `.markdownlint.json`）が作成され、既存 Markdown を通過する設定になっている
-- [x] `scripts/validate-skills.py`（または同等のスクリプト）が作成され、ローカル実行で既存 SKILL.md を通過する
-- [x] スクリプトが、わざと壊した frontmatter を検出できることを手動で確認
+- [x] `.github/workflows/lint.yml` が作成され、`validate-skills` ジョブが定義されている
+- [x] `schemas/plugin.schema.json` と `schemas/marketplace.schema.json` が公式仕様に沿って作成されている
+- [x] `scripts/validate-skills.py` が `python-frontmatter` + `jsonschema` を使って書かれており、ローカル実行で既存ファイルが通過する
+- [x] スクリプトが、わざと壊した frontmatter / plugin.json / marketplace.json を検出できることを手動で確認
 - [x] `tech.md` の CI/CD セクションが更新済み
-- [x] `structure.md` に `.github/` と `scripts/` が追記済み
+- [x] `structure.md` に `.github/` と `scripts/` と `schemas/` が追記済み
 - [x] `plan.md` のチェックボックスが完了に更新
 - [x] PR が作成され、CI が緑になっていることを確認
 
@@ -93,3 +85,8 @@ JSON バリデーション対象:
 - 2026-04-26: わざと壊したフロントマター（description 欠落、型違反、未知フィールド）を検出することを `--root` オプションで確認、exit 1 となることを検証
 - 2026-04-26: `tech.md` CI/CD セクションを更新、`structure.md` に scripts/.github/.markdownlint-cli2.yaml を追記、`plan.md` のチェックを完了に更新
 - 2026-04-26: PR #4 を作成（<https://github.com/mizunashi-mana/agent-skills/pull/4>）、CI 2 ジョブとも success を確認
+- 2026-04-26: ユーザーフィードバックに基づき方針転換。markdownlint を撤去し、frontmatter 抽出は `python-frontmatter`、JSON 検証は `jsonschema` ライブラリに切り替え
+- 2026-04-26: `schemas/plugin.schema.json` / `schemas/marketplace.schema.json` を公式ドキュメントから起こして作成
+- 2026-04-26: `scripts/validate-skills.py` をライブラリベースに書き直し、`scripts/requirements.txt` を追加
+- 2026-04-26: `.markdownlint-cli2.yaml` を削除、workflow から markdownlint ジョブを削除
+- 2026-04-26: ローカルで再検証（17 ファイル / 0 エラー）、わざと壊したフィクスチャでエラー検出を確認
