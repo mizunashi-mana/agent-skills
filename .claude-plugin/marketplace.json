@@ -34,6 +34,20 @@
       "homepage": "https://github.com/mizunashi-mana/agent-skills/tree/main/plugins/merge-dependabot-bump-pr",
       "license": "Apache-2.0 OR MPL-2.0",
       "keywords": ["dependabot", "pull-request", "dependency-management", "review"]
+    },
+    {
+      "name": "agent-coach",
+      "description": "Analyze recent Claude Code transcripts and suggest improvements to user prompts, skill definitions, memory, and context management.",
+      "version": "0.1.0",
+      "author": {
+        "name": "mizunashi-mana",
+        "url": "https://github.com/mizunashi-mana"
+      },
+      "source": "./plugins/agent-coach",
+      "category": "productivity",
+      "homepage": "https://github.com/mizunashi-mana/agent-skills/tree/main/plugins/agent-coach",
+      "license": "Apache-2.0 OR MPL-2.0",
+      "keywords": ["transcript", "feedback", "prompt-engineering", "skill-improvement", "context-management"]
     }
   ]
 }

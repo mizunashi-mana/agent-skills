@@ -1,0 +1,1 @@
+../../../plugins/agent-coach/skills/agent-coach/SKILL.md

@@ -58,11 +58,16 @@ agent-skills/
 │   │                   ├── autodev-start-new-task/
 │   │                   ├── autodev-steering/
 │   │                   └── autodev-switch-to-default/
-│   └── merge-dependabot-bump-pr/                               # merge-dependabot-bump-pr プラグイン
+│   ├── merge-dependabot-bump-pr/                               # merge-dependabot-bump-pr プラグイン
+│   │   ├── .claude-plugin/plugin.json
+│   │   └── skills/
+│   │       └── merge-dependabot-bump-pr/
+│   │           └── SKILL.md                                    # バージョンバンプ PR の安全性レビュー＋マージ
+│   └── agent-coach/                                            # agent-coach プラグイン
 │       ├── .claude-plugin/plugin.json
 │       └── skills/
-│           └── merge-dependabot-bump-pr/
-│               └── SKILL.md                                    # バージョンバンプ PR の安全性レビュー＋マージ
+│           └── agent-coach/
+│               └── SKILL.md                                    # transcript 分析によるプロンプト・スキル・メモリ改善提案
 ├── template/                                                   # スキル作成テンプレート
 │   └── SKILL.md                                                # YAML フロントマター + 本文セクション雛形
 ├── schemas/                                                    # JSON Schema 定義
