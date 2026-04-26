@@ -1,13 +1,13 @@
 ---
 description: Analyze recent Claude Code transcripts and suggest improvements to the user's prompts, skill definitions, memory entries, and context management. Use when the user asks for feedback on prompts/skills, says interactions feel inefficient, suspects context rot, notices skills not triggering, or wants to optimize token usage based on actual usage history.
-allowed-tools: Bash, Read, Glob, Grep, WebFetch
+allowed-tools: Bash, Read, Write, Glob, Grep, WebFetch
 ---
 
 # agent-coach
 
 ## 概要
 
-ユーザーの Claude Code 利用履歴（transcript JSONL）を分析し、6 つの観点から改善提案を行うスキル。runtime に Claude が transcript を直接読み、Anthropic 公式ベストプラクティスとリポジトリ内サーベイに照らして報告する。前処理スクリプトは持たない（Claude の判断で柔軟に分析する）。
+ユーザーの Claude Code 利用履歴（transcript JSONL）を分析し、6 つの観点から改善提案を行うスキル。runtime に Claude が transcript を直接読み、Anthropic 公式ベストプラクティスと本スキル付属のリファレンスに照らして報告する。前処理スクリプトは持たない（Claude の判断で柔軟に分析する）。
 
 観点:
 
@@ -18,12 +18,13 @@ allowed-tools: Bash, Read, Glob, Grep, WebFetch
 4. **コンテキストロット** — 履歴肥大による劣化のシグナル
 5. **スキル未活用** — 使われるべきスキルが triggering されていないケース
 
+具体的な書き換えテンプレ・Hook スニペット・量的目安は付属の [reference/handbook.md](reference/handbook.md) を必要に応じて参照する。
+
 ## 前提条件
 
 - macOS / Linux 環境（transcript パスは `~/.claude/projects/<encoded-cwd>/<session-id>.jsonl`）
 - 分析対象セッションが少なくとも 1 件存在すること
 - （任意）WebFetch が利用できれば、Anthropic 公式ドキュメントを参照して提案の根拠を強化できる。利用不可でも分析自体は実施可能
-- （任意）リポジトリに `.ai-agent/surveys/20260426-claude-code-best-practices/` が存在する場合は、最優先の根拠リファレンスとして参照する
 
 ## 手順
 
@@ -82,7 +83,7 @@ allowed-tools: Bash, Read, Glob, Grep, WebFetch
 3. ユーザーに対して「該当認証情報は流出した可能性があるためローテーションを検討してください」と明示警告
 4. **必ず推奨アクション TOP3 に含める**
 
-**詳細根拠**: [05-failure-patterns-and-signals.md §5.4](../../../../.ai-agent/surveys/20260426-claude-code-best-practices/05-failure-patterns-and-signals.md#54-検出と提案の優先順位) / [06-coach-checklist.md Tier 1](../../../../.ai-agent/surveys/20260426-claude-code-best-practices/06-coach-checklist.md#観点横断-提案優先順位の決定)
+詳細パターンと警告テンプレ → [reference/handbook.md#観点-0-シークレット検出パターン](reference/handbook.md#観点-0-シークレット検出パターン)
 
 #### 観点 1: トークン消費 hot spot
 
@@ -91,7 +92,7 @@ allowed-tools: Bash, Read, Glob, Grep, WebFetch
 - セッション全体の input/output/cache の合計
 - `iterations` 単位で `cache_creation_input_tokens` が大きい assistant ターンの上位 5 件
 - ツール結果が肥大しているターン（直前の `tool_use` の名前 + 直後の `tool_result` の文字数で推定）
-- システム reminder の MCP ツール定義文字数 / アクティブツール数（fabymetal の目安: 設定済み MCP 20〜30、有効化 10 以下、アクティブツール 80 以下）
+- システム reminder の MCP ツール定義文字数 / アクティブツール数
 
 **改善提案の方向性:**
 
@@ -99,10 +100,9 @@ allowed-tools: Bash, Read, Glob, Grep, WebFetch
 - 同じ Bash コマンドの繰り返し → 1 回の集約コマンドへ
 - サブエージェント未活用な調査 → Explore / general-purpose agent への委譲
 - 5 分以上空いた連続ターン → cache miss の可能性
-  （prompt cache TTL = 5 分。`ScheduleWakeup` の `delaySeconds` は 270 秒以下に保つか、5 分以上待つなら 1200 秒以上にまとめて 1 回だけ cache miss にする設計が望ましい）
 - アクティブ MCP / ツール過多 → `disabledMcpServers` で本セッション不要なものを切ることで定義トークンを節約
 
-**詳細根拠**: [01-context-and-session.md §1.5](../../../../.ai-agent/surveys/20260426-claude-code-best-practices/01-context-and-session.md#15-トークン-hot-spot-の典型パターンと対策) / [06-coach-checklist.md 観点1](../../../../.ai-agent/surveys/20260426-claude-code-best-practices/06-coach-checklist.md#観点-1-トークン消費-hot-spot)
+量的目安と書き換えテンプレ → [reference/handbook.md#観点-1-トークン消費-hot-spot](reference/handbook.md#観点-1-トークン消費-hot-spot)
 
 #### 観点 2: 方向修正多発プロンプト
 
@@ -118,19 +118,13 @@ allowed-tools: Bash, Read, Glob, Grep, WebFetch
 **改善提案の方向性:**
 
 - Anthropic Prompt engineering ガイドの該当原則に沿って書き換え案を提示
-  - 主要原則: Be clear and direct / Use examples / Give Claude a role / XML タグで構造化 / chain-of-thought
 - 曖昧な指示語（"いい感じに", "適切に"）の具体化
 - 期待する出力形式・粒度の明示
+- 補正が 2 回以上続いていたら `Esc Esc`（`/rewind`）での巻き戻し運用を併せて提案
 
 報告では「元プロンプト」「Claude の解釈」「ユーザーの修正」「改善案」をセットで示す。
 
-**運用提案（必須）**: 補正が 2 回以上続いたパターンを検出したら、以下も併せて提案する:
-
-> このタイプの補正が 2 回続いた時点で `Esc Esc`（または `/rewind`）で巻き戻し、上記の改善プロンプトで再開する方が効率的です。
->
-> 公式 best practices: "After two failed corrections, `/clear` and write a better initial prompt incorporating what you learned."
-
-**詳細根拠**: [02-prompt-design.md §2.6](../../../../.ai-agent/surveys/20260426-claude-code-best-practices/02-prompt-design.md#26-共通アンチパターンと書き換え案) / [06-coach-checklist.md 観点2](../../../../.ai-agent/surveys/20260426-claude-code-best-practices/06-coach-checklist.md#観点-2-方向修正多発プロンプト)
+書き換え cookbook → [reference/handbook.md#観点-2-方向修正の書き換え-cookbook](reference/handbook.md#観点-2-方向修正の書き換え-cookbook)
 
 #### 観点 3: 指示違反（スキル/メモリ）
 
@@ -146,32 +140,14 @@ allowed-tools: Bash, Read, Glob, Grep, WebFetch
 
 - ルールが曖昧 → 具体例・反例を追加
 - ルールが埋もれている → 配置場所の見直し（CLAUDE.md の冒頭へ移動、専用 memory ファイル化）
-- ルールに `why` が無い → 「**Why:**」「**How to apply:**」セクションを追加（`auto memory` 仕様準拠）
+- ルールに `why` が無い → 「**Why:**」「**How to apply:**」セクションを追加
 - skill description が triggering ロジックを含んでいない → "Use when ..." を追加
 
-**ハーネス化の判断基準（重要）:**
+**ハーネス化の判断:** 文面改善でも繰り返し違反される、または影響が大きい場合は **Hook で決定論的に強制** することを提案する。CLAUDE.md は advisory、Hook は deterministic。
 
-文面改善（Why / How to apply / 配置変更）でも繰り返し違反される場合、または違反の影響が大きい場合は、文面ではなく **Hook で決定論的に強制** することを提案する。CLAUDE.md は advisory、Hook は deterministic（公式）。
-
-| 状況 | 提案する Hook パターン |
-| --- | --- |
-| 同じルール違反が 3 回以上 | PreToolUse / PostToolUse Hook 化 |
-| 「コミット前にテスト」のような完了ゲート系 | Stop Hook で未テスト時にブロック |
-| 危険コマンド（`rm -rf`, `git push --force` 等）の実行検出 | PreToolUse Safety Gate |
-| リンタ違反パターンが繰り返される | PostToolUse Quality Loop で自動注入 |
-
-提案には Hook の最小スニペット例（`.claude/settings.json` の `hooks` フィールド形式）を含めると、ユーザーがすぐ実装できる。
-
-**詳細根拠**: [03-extensions.md](../../../../.ai-agent/surveys/20260426-claude-code-best-practices/03-extensions.md) / [04-harness-engineering.md §4.4](../../../../.ai-agent/surveys/20260426-claude-code-best-practices/04-harness-engineering.md#44-hook-4-パターン再掲) / [06-coach-checklist.md 観点3](../../../../.ai-agent/surveys/20260426-claude-code-best-practices/06-coach-checklist.md#観点-3-指示違反claudemd--skill--memory)
+判断表と Hook スニペット例 → [reference/handbook.md#観点-3-指示違反--文面改善-vs-hook-化](reference/handbook.md#観点-3-指示違反--文面改善-vs-hook-化)
 
 #### 観点 4: コンテキストロット
-
-量的目安:
-
-- 1M モデルでも **30〜40 万トークン**付近から性能劣化が観測される（Thariq）
-- 200K モデル（Opus 等）では実効上限が **70K 程度**に縮むケースもある（fabymetal）
-- コンテキスト使用率 **60% 超**で次セッション化を検討（fabymetal）
-- `/context` で常時可視化推奨
 
 検出シグナル（以下はあくまで目安。長い設計議論セッションなど、ターン数や応答サイズが大きくても問題ない場合もあるので、シグナル単体での断定は避ける）:
 
@@ -188,7 +164,7 @@ allowed-tools: Bash, Read, Glob, Grep, WebFetch
 - 長期記憶は `MEMORY.md` 経由の memory ファイル化（auto memory 仕様）
 - `CLAUDE.md` に "Compact Instructions" セクションを追加して保持項目を制御
 
-**詳細根拠**: [01-context-and-session.md §1.6](../../../../.ai-agent/surveys/20260426-claude-code-best-practices/01-context-and-session.md#16-コンテキストロットの典型シグナル) / [06-coach-checklist.md 観点4](../../../../.ai-agent/surveys/20260426-claude-code-best-practices/06-coach-checklist.md#観点-4-コンテキストロット)
+量的目安と Compact Instructions サンプル → [reference/handbook.md#観点-4-コンテキストロット](reference/handbook.md#観点-4-コンテキストロット)
 
 #### 観点 5: スキル未活用
 
@@ -206,13 +182,27 @@ allowed-tools: Bash, Read, Glob, Grep, WebFetch
 - 似た description のスキルが競合 → 区別を明示
 - skill-creator の triggering 最適化を案内
 
-**詳細根拠**: [03-extensions.md §3.3](../../../../.ai-agent/surveys/20260426-claude-code-best-practices/03-extensions.md#33-skill-の設計) / [06-coach-checklist.md 観点5](../../../../.ai-agent/surveys/20260426-claude-code-best-practices/06-coach-checklist.md#観点-5-スキル未活用)
+Use when... テンプレ → [reference/handbook.md#観点-5-スキル-description-改善](reference/handbook.md#観点-5-スキル-description-改善)
 
 ### 4. レポート生成
 
 レポートのゴールは **「ユーザがすぐに次の行動を選べる」** こと。観点別に finding を網羅列挙するのではなく、**傾向（パターン）と対策**を主軸に据える。
 
-#### 出力構造
+#### レポートの出力先（ファイル化必須）
+
+レポート全体は長くなるため、画面に直接ダンプせず必ずファイルに書き出す:
+
+1. 出力ディレクトリは **`.ai-agent/tmp/<YYYYMMDD>-agent-coach/`**（cwd 基準）
+2. ディレクトリが存在しなければ `mkdir -p` で作成する
+3. レポート本文を `.ai-agent/tmp/<YYYYMMDD>-agent-coach/report.md` として `Write` で書き出す
+4. 画面には以下のみ表示する:
+   - レポートファイルのパス
+   - TL;DR セクション（傾向 3 件 + 誘導 1 行）
+   - 推奨アクション TOP3
+
+これにより画面が見やすく、過去レポートも追跡可能になる。
+
+#### 出力構造（ファイル本文）
 
 ```markdown
 # Agent Coach レポート
@@ -235,7 +225,7 @@ allowed-tools: Bash, Read, Glob, Grep, WebFetch
 
 **起きていること**: <2-3 行のパターン記述。代表事例 2-3 件をターン番号で参照>
 
-**なぜ問題か**: <1-2 行。サーベイ／公式ドキュリンクを inline で>
+**なぜ問題か**: <1-2 行。reference/handbook.md 該当節 / 公式ドキュリンクを inline で>
 
 **対策**:
 1. **<具体的アクション>** — <1 行の how>
@@ -318,7 +308,7 @@ allowed-tools: Bash, Read, Glob, Grep, WebFetch
 
 判断基準: **ユーザーがすぐに行動でき、複数セッションにわたって効果が継続するもの** を上に置く。
 
-**詳細根拠**: [06-coach-checklist.md 観点横断: 提案優先順位の決定](../../../../.ai-agent/surveys/20260426-claude-code-best-practices/06-coach-checklist.md#観点横断-提案優先順位の決定)
+判断基準の詳細 → [reference/handbook.md#推奨アクション-top3-の-tier](reference/handbook.md#推奨アクション-top3-の-tier)
 
 #### finding が少ないとき
 
@@ -326,15 +316,14 @@ allowed-tools: Bash, Read, Glob, Grep, WebFetch
 
 ### 5. ベストプラクティス参照
 
-提案の根拠は以下の優先順位で参照する:
+提案の根拠は以下を順に参照する:
 
-1. **リポジトリ内サーベイ**（存在すれば最優先）: `.ai-agent/surveys/20260426-claude-code-best-practices/` 配下の各ファイル。観点別に整理済みで参照効率が高い
+1. **付属リファレンス**: [reference/handbook.md](reference/handbook.md) — 書き換えテンプレ・Hook スニペット・量的目安・一次ソースリスト
 2. **公式ドキュメント**（必要なら WebFetch）:
    - Best practices: <https://code.claude.com/docs/en/best-practices>
    - Skills: <https://code.claude.com/docs/en/skills>
    - Hooks: <https://code.claude.com/docs/en/hooks>
    - Memory: <https://code.claude.com/docs/en/memory>
-3. **コミュニティ記事**: サーベイ README に一次ソース一覧あり
 
 参照したらレポートに引用元を付記する。
 
@@ -345,3 +334,4 @@ allowed-tools: Bash, Read, Glob, Grep, WebFetch
 - **巨大 JSONL の全文 Read を避ける**。1 ファイル 1MB を超える場合は `Bash` で `wc -l` → 必要箇所のみ `sed -n` で抽出、または python での集計を併用する
 - **改善提案は具体的に**。「もう少し明確に書いてください」ではなく、書き換え後のプロンプト例まで提示する
 - **断定を避ける**。トークン消費・コンテキストロットは閾値判断で誤検出があり得る。「この可能性があります」のトーンを基本にする。シグナル単体で結論せず、複数シグナルが揃ったときに「可能性」として提案
+- **レポートはファイルに書き出し**、画面には TL;DR + TOP3 + パスのみ表示する
