@@ -1,6 +1,6 @@
 ---
 description: Switch to the default branch after a PR is merged, pull latest changes, and run compaction. Use after merging or having a PR merged to start fresh.
-allowed-tools: '"Bash(gh pr merge *)", "Bash(git checkout *)", "Bash(git pull *)", "Bash(git pull)", "Bash(git branch *)", "Bash(git rev-parse *)", "Bash(git remote *)", "Bash(git symbolic-ref *)", "Bash(git status *)", "Bash(gh pr list *)"'
+allowed-tools: Bash(gh pr merge *), "Bash(git checkout *)", "Bash(git pull *)", "Bash(git pull)", "Bash(git branch *)", "Bash(git rev-parse *)", "Bash(git remote *)", "Bash(git symbolic-ref *)", "Bash(git status *)", "Bash(gh pr list *)"
 ---
 
 # デフォルトブランチへの切り替え
