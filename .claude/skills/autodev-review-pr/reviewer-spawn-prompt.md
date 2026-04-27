@@ -43,33 +43,45 @@
 - テンプレートの参照パスが正しいか
 - 日本語ドキュメントの品質（README.md と LICENSE は英語であること）
 
-### 5. Pending Review の作成
-
-- `mcp__github__pull_request_review_write` で pending review を作成（method: `create`）
-- event は指定せず、まず pending 状態で作成
-
-### 6. 行コメントの追加
-
-- `mcp__github__add_comment_to_pending_review` で各コメントを追加
-- 適切な行番号と side (LEFT/RIGHT) を指定
-- subjectType: LINE で行レベルのコメント
-- Critical/Warning の指摘がある場合のみ行コメントを追加
-
-### 7. Submit
+### 5. レビューの投稿
 
 レビュー結果に基づいてアクションを決定:
 
-- Critical がある場合: REQUEST_CHANGES
-- Critical がなく Warning のみ、または Info のみ: COMMENT
-- 問題がない場合: APPROVE（自分の PR の場合は COMMENT にフォールバック）
+- Critical がある場合: `REQUEST_CHANGES`
+- Critical がなく Warning のみ、または Info のみ: `COMMENT`
+- 問題がない場合: `APPROVE`（自分の PR の場合は `COMMENT` にフォールバック）
 
-`mcp__github__pull_request_review_write` で submit（method: `submit_pending`）し、body に総評を含める。
+`gh api -X POST "repos/{owner}/{repo}/pulls/{PR_NUMBER}/reviews" --input -` で総評と行コメントを 1 リクエストで送信する。`{owner}/{repo}` は `gh api` が現在のリモートから自動解決する。
 
-### 8. 結果報告
+```bash
+gh api -X POST "repos/{owner}/{repo}/pulls/{PR_NUMBER}/reviews" --input - <<'JSON'
+{
+  "body": "総評の本文",
+  "event": "REQUEST_CHANGES",
+  "comments": [
+    {
+      "path": "src/foo.ts",
+      "line": 42,
+      "side": "RIGHT",
+      "body": "Critical: ..."
+    }
+  ]
+}
+JSON
+```
+
+**注意点**:
+
+- `event` を指定して POST することで、pending を経由せず一気に submit される
+- 行コメントは Critical/Warning のみ `comments[]` に含める（Info はメッセージ本文の総評に含める）
+- 複数行コメント（範囲）を付けたい場合は `start_line` / `start_side` を併記する
+- 行コメントが不要なら `comments` を省略してよい
+
+### 6. 結果報告
 
 レビュー完了後、lead にメッセージでレビュー結果のサマリーを送信してください。
 
-### 9. シャットダウン
+### 7. シャットダウン
 
 lead からの `shutdown_request` を待ち、承認してシャットダウンしてください。lead への結果報告が完了したら、それ以上の作業は不要です。
 
