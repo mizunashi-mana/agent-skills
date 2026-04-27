@@ -1,6 +1,6 @@
 ---
 description: Create a GitHub pull request from the current branch's changes. Use when changes are ready for review and you want to open a PR.
-allowed-tools: Read, Glob, "Bash(git status *)", "Bash(git log *)", "Bash(git diff *)", "Bash(git push *)", "Bash(git branch --show-current)", "Bash(gh pr view *)", mcp__github__create_pull_request, mcp__github__update_pull_request
+allowed-tools: Read, Glob, "Bash(git status *)", "Bash(git log *)", "Bash(git diff *)", "Bash(git push *)", "Bash(git branch --show-current)", "Bash(gh pr view *)", "Bash(gh pr create *)", "Bash(gh pr edit *)"
 ---
 
 # PR 作成
@@ -18,17 +18,23 @@ allowed-tools: Read, Glob, "Bash(git status *)", "Bash(git log *)", "Bash(git di
    - ブランチがリモートにない場合は `git push -u origin <branch>` でプッシュ
 
 3. **PR を作成**:
-   - `mcp__github__create_pull_request` を使用
+   - `gh pr create --title "<タイトル>" --body-file -` を使用（本文はヒアドキュメントで標準入力から渡す）:
+     ```bash
+     gh pr create --title "<タイトル>" --body-file - <<'BODY'
+     ## 目的
+     変更の背景・目的
+
+     ## 変更概要
+     - 主な変更点を箇条書き
+     BODY
+     ```
    - タイトル: 変更内容を簡潔に要約
-   - ボディ:
-     - 目的: 変更の背景・目的
-     - 変更概要: 主な変更点を箇条書き
-   - 注意点：改行のエスケープは不要。PR 説明の改行がエスケープされていないか確認する
+   - 注意点：`--body-file -` でヒアドキュメントから渡せば改行が `\n` にエスケープされない
 
 4. **PR の内容を確認**:
-   - `gh pr view {pull_number} --json body` で作成された PR の本文を取得
+   - `gh pr view <number> --json body` で作成された PR の本文を取得
    - 改行が `\n` のようにエスケープされたまま表示されていないか確認
-   - 問題がある場合は `mcp__github__update_pull_request` で修正する
+   - 問題がある場合は `gh pr edit <number> --body-file -` で修正する
 
 5. **PR URL を報告**:
    - 作成した PR の URL をユーザーに伝える
