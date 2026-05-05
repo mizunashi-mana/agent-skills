@@ -35,7 +35,7 @@
 - [x] 評価で見つかった問題点を作業ログにリストアップ
 - [x] 修正可能な問題点について SKILL.md を更新
 - [x] `python3 scripts/validate-skills.py` が通る
-- [ ] PR を作成（`/autodev-create-pr`）
+- [x] PR を作成（`/autodev-create-pr`） → https://github.com/mizunashi-mana/agent-skills/pull/16
 
 ## 作業ログ
 
