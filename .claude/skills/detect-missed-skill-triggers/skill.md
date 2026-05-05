@@ -1,0 +1,1 @@
+../../../plugins/agent-coach/skills/detect-missed-skill-triggers/SKILL.md
