@@ -22,6 +22,7 @@ allowed-tools: Read, Glob, "Bash(git status *)", "Bash(git log *)", "Bash(git di
 
 4. **PR を作成**:
    - `gh pr create --title "<タイトル>" --body-file -` を使用（本文はヒアドキュメントで標準入力から渡す）:
+     <!-- pr-language: ja -->
      ```bash
      gh pr create --title "<タイトル>" --body-file - <<'BODY'
      ## 目的
@@ -31,6 +32,7 @@ allowed-tools: Read, Glob, "Bash(git status *)", "Bash(git log *)", "Bash(git di
      - 主な変更点を箇条書き
      BODY
      ```
+     <!-- /pr-language -->
    - タイトル: 変更内容を簡潔に要約
    - ボディ: PR テンプレートに沿って記載
    - 注意点：`--body-file -` でヒアドキュメントから渡せば改行が `\n` にエスケープされない
@@ -47,4 +49,4 @@ allowed-tools: Read, Glob, "Bash(git status *)", "Bash(git log *)", "Bash(git di
 
 - コミットが済んでいない変更がある場合は、先にコミットするか確認する
 - main ブランチへの直接プッシュは避ける
-- PR タイトルは日本語で簡潔に（50文字以内推奨）
+- <!-- pr-language: ja -->PR タイトルは日本語で簡潔に（50文字以内推奨）<!-- /pr-language -->
