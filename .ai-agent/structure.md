@@ -22,7 +22,7 @@ agent-skills/
 │       └── 20260426-claude-code-best-practices/                # Claude Code ベストプラクティス調査（agent-coach の根拠リファレンス）
 ├── .claude/                                                    # Claude Code 設定
 │   ├── settings.local.json                                     # ローカル設定
-│   └── skills/                                                 # 開発用スキル（autodev シリーズ）
+│   └── skills/                                                 # 開発用スキル（autodev シリーズ + plugins への symlink）
 │       ├── autodev-create-issue/                               # GitHub Issue 作成
 │       ├── autodev-create-pr/                                  # PR 作成
 │       ├── autodev-discussion/                                 # 対話的アイデア整理
@@ -35,7 +35,9 @@ agent-skills/
 │       ├── autodev-start-new-survey/                           # 技術調査開始
 │       ├── autodev-start-new-task/                             # タスク開始（トリアージ付き）
 │       ├── autodev-steering/                                   # steering ドキュメント更新
-│       └── autodev-switch-to-default/                          # デフォルトブランチ切り替え
+│       ├── autodev-switch-to-default/                          # デフォルトブランチ切り替え
+│       ├── detect-context-rot/                                 # → plugins/agent-coach/.../SKILL.md への symlink（本リポジトリ自体での試用）
+│       └── recommend-bash-allowlist/                           # → plugins/agent-coach/.../SKILL.md への symlink（本リポジトリ自体での試用）
 ├── .claude-plugin/                                             # プラグインマーケットプレイス定義
 │   └── marketplace.json
 ├── plugins/                                                    # 公開プラグイン本体
@@ -67,8 +69,12 @@ agent-skills/
 │   └── agent-coach/                                            # agent-coach プラグイン
 │       ├── .claude-plugin/plugin.json
 │       └── skills/
-│           └── agent-coach/
-│               └── SKILL.md                                    # transcript 分析によるプロンプト・スキル・メモリ改善提案
+│           ├── agent-coach/
+│           │   └── SKILL.md                                    # transcript 分析によるプロンプト・スキル・メモリ改善提案
+│           ├── detect-context-rot/
+│           │   └── SKILL.md                                    # コンテキストロット深掘り（rot 始点推定 + クロスセッション傾向 + A〜E 改善提案）
+│           └── recommend-bash-allowlist/
+│               └── SKILL.md                                    # auto / bypassPermissions モード下の Bash 実績から allowlist 推薦
 ├── template/                                                   # スキル作成テンプレート
 │   └── SKILL.md                                                # YAML フロントマター + 本文セクション雛形
 ├── schemas/                                                    # JSON Schema 定義

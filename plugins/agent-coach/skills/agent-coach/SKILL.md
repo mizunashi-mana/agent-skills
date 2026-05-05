@@ -166,6 +166,8 @@ allowed-tools: Bash, Read, Write, Glob, Grep, WebFetch
 
 量的目安と Compact Instructions サンプル → [reference/handbook.md#観点-4-コンテキストロット](reference/handbook.md#観点-4-コンテキストロット)
 
+本観点で finding が複数出たり、クロスセッションでの傾向確認・MEMORY.md 移行候補の抽出までしたい場合は、深掘り専用の `detect-context-rot` スキル（同プラグイン同梱）を案内する。
+
 #### 観点 5: スキル未活用
 
 手順:

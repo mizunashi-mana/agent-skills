@@ -1,0 +1,1 @@
+../../../plugins/agent-coach/skills/detect-context-rot/SKILL.md
