@@ -120,7 +120,7 @@ description: <改善後の description>
 - [x] 既存 agent-coach の観点 5 セクションに本スキルへの相互参照を追記（SKILL.md 本体 + reference/handbook.md）
 - [x] `.ai-agent/structure.md` に新スキルディレクトリが反映されている
 - [x] `.claude/skills/detect-missed-skill-triggers/skill.md` を本体への相対 symlink として作成
-- [ ] PR が作成されている
+- [x] PR が作成されている (#11)
 
 ## 作業ログ
 
