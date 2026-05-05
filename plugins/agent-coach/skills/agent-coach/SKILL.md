@@ -186,6 +186,8 @@ allowed-tools: Bash, Read, Write, Glob, Grep, WebFetch
 
 Use when... テンプレ → [reference/handbook.md#観点-5-スキル-description-改善](reference/handbook.md#観点-5-スキル-description-改善)
 
+本観点で finding が複数出たり、未トリガパターンの集約・description 書き換え案の生成・サブエージェント未トリガまで深掘りしたい場合は、深掘り専用の `detect-missed-skill-triggers` スキル（同プラグイン同梱）を案内する。
+
 ### 4. レポート生成
 
 レポートのゴールは **「ユーザがすぐに次の行動を選べる」** こと。観点別に finding を網羅列挙するのではなく、**傾向（パターン）と対策**を主軸に据える。
