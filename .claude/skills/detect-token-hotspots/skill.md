@@ -1,0 +1,1 @@
+../../../plugins/agent-coach/skills/detect-token-hotspots/SKILL.md
