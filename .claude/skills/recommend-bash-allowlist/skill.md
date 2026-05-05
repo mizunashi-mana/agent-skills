@@ -1,0 +1,1 @@
+../../../plugins/agent-coach/skills/recommend-bash-allowlist/SKILL.md
