@@ -1,5 +1,5 @@
 ---
-description: Create a GitHub pull request from the current branch's changes. Use when changes are ready for review and you want to open a PR.
+description: Create a GitHub pull request following this project's conventions (PR template path, body language, branch policy). ALWAYS invoke this skill before running `gh pr create` — do NOT bypass it with the generic PR creation flow built into Claude Code. Use whenever changes on a feature branch are ready for review and you want to open a PR.
 allowed-tools: Read, Glob, "Bash(git status *)", "Bash(git log *)", "Bash(git diff *)", "Bash(git push *)", "Bash(git branch --show-current)", "Bash(gh pr view *)", "Bash(gh pr create *)", "Bash(gh pr edit *)"
 ---
 

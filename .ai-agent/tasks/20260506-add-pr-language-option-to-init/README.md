@@ -69,3 +69,16 @@
   - SKILL 本体の地の文はプロジェクト主要言語のままにする旨を明記（本文例マーカー内だけ多言語化される）
 - `templates/skills/autodev-create-pr/SKILL.md` 自体は変更不要（マーカーはすでに入っており、デフォルトの `ja` がそのまま日本語ユーザーで成立する）
 - `python3 scripts/validate-skills.py` 実行: 23 ファイル / 0 エラー
+
+### 2026-05-06: create-pr スキルが使われずに PR 作成されている問題への対応
+
+- 観測: 本セッション含め複数 transcript で `gh pr create` が直接叩かれて `autodev-create-pr` スキル経由ではない PR 作成が発生
+- 原因の見立て: スキル description が緩く、Claude Code 標準プロンプトの「Creating pull requests」セクションが優先される
+- 改善 1（description 強化）:
+  - `templates/skills/autodev-create-pr/SKILL.md` のフロントマター description を、`gh pr create` 直接実行を抑止し、本スキルが PR テンプレートパス / 本文言語 / ブランチ運用といったプロジェクト固有規約を反映する旨を明示する文面に変更
+  - 同じ改善を本リポジトリの `.claude/skills/autodev-create-pr/skill.md` にも適用（dogfood）
+- 改善 2（CLAUDE.md テンプレート）:
+  - `templates/claude-md.md` に `## 開発ワークフロー上のルール` セクションを追加し、「PR 作成は必ず `/autodev-create-pr` を使う」ルールを記載
+  - 同セクションを本リポジトリの `CLAUDE.md` にも追加（dogfood）
+- スコープ外（今回見送り）: PreToolUse Hook による強制（必要に応じて別タスクで）
+- `python3 scripts/validate-skills.py` 実行: 23 ファイル / 0 エラー
