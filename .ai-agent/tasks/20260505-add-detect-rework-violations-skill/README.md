@@ -50,7 +50,7 @@
 - [x] `agent-coach` handbook.md に深掘りツール節を追加（観点 2 / 観点 3）
 - [x] `.ai-agent/structure.md` を更新
 - [x] `scripts/validate-skills.py` を通過（YAML フロントマター検証）
-- [ ] PR を作成
+- [x] PR を作成（#13）
 
 ## 作業ログ
 
