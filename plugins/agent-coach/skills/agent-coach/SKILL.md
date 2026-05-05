@@ -104,6 +104,8 @@ allowed-tools: Bash, Read, Write, Glob, Grep, WebFetch
 
 量的目安と書き換えテンプレ → [reference/handbook.md#観点-1-トークン消費-hot-spot](reference/handbook.md#観点-1-トークン消費-hot-spot)
 
+本観点で finding が複数出たり、ターン単位の hot spot 抽出・カテゴリ別の書き換え案（offset/limit 化、サブエージェント委譲、MCP 切り離し等）まで深掘りしたい場合は、深掘り専用の `detect-token-hotspots` スキル（同プラグイン同梱）を案内する。
+
 #### 観点 2: 方向修正多発プロンプト
 
 検出シグナル（ユーザーメッセージ中）:
