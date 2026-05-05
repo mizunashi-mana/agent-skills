@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "agent-coach",
-  "description": "Analyze recent Claude Code transcripts and suggest improvements to user prompts, skill definitions, memory, and context management.",
+  "description": "A bundle of focused transcript-analysis skills for Claude Code: each skill targets a single failure mode (context rot, token hot spots, rework & violations, missed skill triggers, Bash allowlist recommendations).",
   "version": "0.1.0",
   "author": {
     "name": "mizunashi-mana",

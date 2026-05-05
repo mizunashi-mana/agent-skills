@@ -19,7 +19,7 @@ agent-skills/
 │   ├── projects/                                               # 長期プロジェクト管理
 │   ├── tasks/                                                  # 個別タスク管理
 │   └── surveys/                                                # 技術調査・検討
-│       └── 20260426-claude-code-best-practices/                # Claude Code ベストプラクティス調査（agent-coach の根拠リファレンス）
+│       └── 20260426-claude-code-best-practices/                # Claude Code ベストプラクティス調査（agent-coach プラグインの根拠リファレンス）
 ├── .claude/                                                    # Claude Code 設定
 │   ├── settings.local.json                                     # ローカル設定
 │   └── skills/                                                 # 開発用スキル（autodev シリーズ + plugins への symlink）
@@ -37,7 +37,7 @@ agent-skills/
 │       ├── autodev-steering/                                   # steering ドキュメント更新
 │       ├── autodev-switch-to-default/                          # デフォルトブランチ切り替え
 │       ├── detect-context-rot/                                 # → plugins/agent-coach/.../SKILL.md への symlink（本リポジトリ自体での試用）
-│       ├── detect-missed-skill-triggers/                        # → plugins/agent-coach/.../SKILL.md への symlink（本リポジトリ自体での試用）
+│       ├── detect-missed-skill-triggers/                       # → plugins/agent-coach/.../SKILL.md への symlink（本リポジトリ自体での試用）
 │       ├── detect-rework-and-violations/                       # → plugins/agent-coach/.../SKILL.md への symlink（本リポジトリ自体での試用）
 │       ├── detect-token-hotspots/                              # → plugins/agent-coach/.../SKILL.md への symlink（本リポジトリ自体での試用）
 │       └── recommend-bash-allowlist/                           # → plugins/agent-coach/.../SKILL.md への symlink（本リポジトリ自体での試用）
@@ -69,11 +69,9 @@ agent-skills/
 │   │   └── skills/
 │   │       └── merge-dependabot-bump-pr/
 │   │           └── SKILL.md                                    # バージョンバンプ PR の安全性レビュー＋マージ
-│   └── agent-coach/                                            # agent-coach プラグイン
+│   └── agent-coach/                                            # agent-coach プラグイン（観点ごとに特化した transcript 分析スキル束）
 │       ├── .claude-plugin/plugin.json
 │       └── skills/
-│           ├── agent-coach/
-│           │   └── SKILL.md                                    # transcript 分析によるプロンプト・スキル・メモリ改善提案
 │           ├── detect-context-rot/
 │           │   └── SKILL.md                                    # コンテキストロット深掘り（rot 始点推定 + クロスセッション傾向 + A〜E 改善提案）
 │           ├── detect-missed-skill-triggers/

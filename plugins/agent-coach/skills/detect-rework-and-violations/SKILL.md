@@ -7,7 +7,7 @@ allowed-tools: Bash, Read, Write, Glob, Grep
 
 ## 概要
 
-ユーザーの transcript JSONL を分析し、**手戻り**（方向修正ループ・差し戻し・「やり直し」指示）と **指示違反**（CLAUDE.md / SKILL.md / memory / system reminder で示されたルールに対する違反）を検出する特化スキル。`agent-coach` の観点 2（方向修正多発プロンプト）と観点 3（指示違反）が「サマリ提示」止まりなのに対し、本スキルは:
+ユーザーの transcript JSONL を分析し、**手戻り**（方向修正ループ・差し戻し・「やり直し」指示）と **指示違反**（CLAUDE.md / SKILL.md / memory / system reminder で示されたルールに対する違反）を検出する特化スキル。本スキルは:
 
 1. プロジェクトと session 内に存在する**ルールを構造化抽出**（"必ず X する" / "Y してはいけない" / skill description の Use when / Distinct from / SKIP 条件）
 2. 手戻り事例を **3 点組（元プロンプト → Claude の解釈 → ユーザーの修正）**で抽出
@@ -15,13 +15,7 @@ allowed-tools: Bash, Read, Write, Glob, Grep
 4. 主因を 5 種に分類（**曖昧プロンプト / ルール埋没 / 検証なし完了 / トリガミス / コンテキストロット起因**）
 5. 改善提案を 5 カテゴリに分類して具体的な書き換え案を提示（**A. プロンプト書き換え / B. ルール明文化 / C. Hook 化 / D. 巻き戻し運用 / E. skill description 改善**）
 
-`agent-coach` の総合健康診断で「補正ループや指示違反が主因らしい」とわかった後の**深掘り**として呼び出すのが想定ユースケース。単独でも動く。
-
-姉妹スキルとの関係:
-
-- `detect-context-rot`: 履歴肥大による劣化が主眼。本スキルは「rot がなくても起きる」ループ・違反に焦点を当て、改善は文面レベル（プロンプト・ルール文言）と運用レベル（Hook・巻き戻し）が中心。違反の主因が rot 起因の場合は `detect-context-rot` の結果と整合させる
-- `detect-token-hotspots`: トークン消費が主眼。本スキルは消費量と独立に「やり直し」と「指示無視」を見る
-- `detect-missed-skill-triggers`: スキル/サブエージェント未トリガが主眼。本スキルは「使うべきだったが使わなかった」結果が指示違反になっているケースを重複検出する。両者で同じ finding が出るのが正常で、改善カテゴリ E（description 改善）は同じ提案に揃える
+なお、手戻り・違反はコンテキストロット（履歴肥大による初期指示の忘却）が根本原因であるケースが少なくない。違反ターンが session 後半に集中している、初期 reminder で示されたルールが消失している等のシグナルが揃う場合は、本スキルの文面・運用レベルの改善より先にコンテキストロット側の対処（断点 / MEMORY 化 / Compact Instructions）を検討する。
 
 ## 前提条件
 
@@ -112,7 +106,7 @@ allowed-tools: Bash, Read, Write, Glob, Grep
 
 - ルールが「必ず X する」型 → 該当文脈で X が行われていない `tool_use` シーケンス
 - ルールが「Y してはいけない」型 → 該当文脈で Y が `tool_use` または assistant text に出現
-- ルールが skill description の Use when / SKIP when → 該当ユーザー入力時に当該 skill を呼ばずに別手段で対応している（detect-missed-skill-triggers と重複可）
+- ルールが skill description の Use when / SKIP when → 該当ユーザー入力時に当該 skill を呼ばずに別手段で対応している
 
 代表例:
 
@@ -162,7 +156,7 @@ allowed-tools: Bash, Read, Write, Glob, Grep
 | **ルール埋没** | ルール出典が CLAUDE.md の中盤以降 / system reminder の長文末尾 / 違反が複数セッションで反復 | B（ルール明文化） |
 | **検証なし完了** | 「完了」宣言の直後に差し戻し / テスト / 動作確認の `tool_use` が無いまま finish | C（Hook 化）または B（ルール明文化） |
 | **トリガミス** | 該当 skill の Use when にマッチしているのに Skill 未呼び出しで generic 対応 | E（description 改善） + 必要なら B |
-| **コンテキストロット起因** | 違反ターンが推定 rot 始点以降 / 同セッション後半でのみ違反 / 初期指示が消失している | `detect-context-rot` への送り（D 巻き戻し / Compact Instructions） |
+| **コンテキストロット起因** | 違反ターンが推定 rot 始点以降 / 同セッション後半でのみ違反 / 初期指示が消失している | D（巻き戻し）+ コンテキストロット側の対処（断点 / MEMORY 化 / Compact Instructions）を優先 |
 
 #### 5.1 セッション横断の傾向
 
@@ -278,7 +272,7 @@ Hook 設定スニペット例:
 description: <既存の説明>. Use when <user-keyword-1>, <user-keyword-2>, or <pattern> — for example "<代表ユーザー入力>". Distinct from <other-skill>: this handles <specific-aspect>.
 ```
 
-詳細パターンは `detect-missed-skill-triggers` の手順 6 を参照。本スキルでは「違反として顕在化したケース」のみ E に分類し、description 抜粋 + 1 行の修正案にとどめ、深掘りは姉妹スキルへ案内する。
+本スキルでは「違反として顕在化したケース」のみ E に分類し、description 抜粋 + 1 行の修正案にとどめる。description 自体の総点検（未トリガ事例も含む）は本スキルの範囲外。
 
 ### 7. レポート生成
 
@@ -381,7 +375,7 @@ description: <既存の説明>. Use when <user-keyword-1>, <user-keyword-2>, or 
 - 否定語含むユーザー入力でも、過去の話題引用なら手戻りではない
 - ルール文が一般的注意であって個別アクションを禁じていない場合は違反ではない
 - 段階的計画の「次ステップ」を完了後差し戻しと誤判定する可能性
-- rot 起因の違反は本スキルの改善案より先に `detect-context-rot` の対処を優先
+- rot 起因の違反は本スキルの文面改善より先に、コンテキストロット側の対処（断点 / MEMORY 化 / Compact Instructions）を優先
 
 ## 推奨アクション TOP3
 
@@ -510,13 +504,12 @@ rules = [
 
 ## 注意事項
 
-- **transcript には機密情報が含まれる可能性がある**。レポートに引用する元プロンプトや tool_use 引数にトークン的な値が混入していないか軽くチェックし、疑わしければマスクする（`agent-coach` 観点 0 と同じ方針）
+- **transcript には機密情報が含まれる可能性がある**。レポートに引用する元プロンプトや tool_use 引数にトークン的な値が混入していないか軽くチェックし、疑わしければマスクする（API キー、認証ヘッダ、環境変数ダンプ中の secret 等）
 - **自分自身のセッションを分析しないこと**（ユーザー明示対象時を除く）。mtime 最新の jsonl を実行中セッションとみなして除外する
 - **巨大 JSONL の全文 Read を避ける**。1 ファイル 1MB を超える場合は `python3` ヒアドキュメントでの集計を併用する
 - **ルール抽出は完全ではない**。自然言語の抜粋なので解釈には幅がある。違反判定は複数シグナル（語彙 + tool_use 不在/存在）が揃ったときに「違反候補」のトーンで提示する
 - **誤検出条件を必ず併記**。「補正ループ確定」ではなく「補正ループ候補」、「指示違反確定」ではなく「指示違反候補」を基本トーンに
-- **`detect-context-rot` との関係**: rot 始点以降に集中する違反は、本スキルの B/C 改善より先に `detect-context-rot` の D（MEMORY 移行）/ E（Compact Instructions）で対処したほうが根治することがある。レポートに「rot 起因の可能性」として案内する
-- **`detect-missed-skill-triggers` との関係**: トリガミス起因の違反は両スキルで重複検出される。改善カテゴリ E（description 改善）は同じ提案に揃え、書き換え案の生成は姉妹スキルに委ねるか、本スキルでは要約 + 案内にとどめる
+- **rot 起因の可能性に注意**: 違反が session 後半に集中、または初期 reminder で示されたルールが消失している場合、本スキルの B/C 改善より先にコンテキストロット側の対処（MEMORY 化 / Compact Instructions / 断点）で根治するケースがある。レポートに「rot 起因の可能性」として併記する
 - **改善提案は具体的に**。「もっと明確に書いてください」「気をつけてください」ではなく**書き換え後の文面 / Hook スニペット / 巻き戻し操作**まで提示する
 - **Hook 化の提案は慎重に**。CLAUDE.md の文面改善で十分なケースで Hook を提案すると運用が重くなる。**3 回以上反復**または**影響が大きい**ケースに限定する
 - **レポートはファイルに書き出し**、画面には TL;DR + TOP3 + パスのみ表示する
