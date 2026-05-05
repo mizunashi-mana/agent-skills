@@ -128,6 +128,8 @@ allowed-tools: Bash, Read, Write, Glob, Grep, WebFetch
 
 書き換え cookbook → [reference/handbook.md#観点-2-方向修正の書き換え-cookbook](reference/handbook.md#観点-2-方向修正の書き換え-cookbook)
 
+本観点で finding が複数出たり、3 点組（元プロンプト → Claude 解釈 → ユーザー修正）の集約や指示違反との横断分析（5 カテゴリの改善提案: プロンプト書き換え / ルール明文化 / Hook 化 / 巻き戻し運用 / skill description 改善）まで深掘りしたい場合は、深掘り専用の `detect-rework-and-violations` スキル（同プラグイン同梱、観点 3 と統合）を案内する。
+
 #### 観点 3: 指示違反（スキル/メモリ）
 
 対象:
@@ -148,6 +150,8 @@ allowed-tools: Bash, Read, Write, Glob, Grep, WebFetch
 **ハーネス化の判断:** 文面改善でも繰り返し違反される、または影響が大きい場合は **Hook で決定論的に強制** することを提案する。CLAUDE.md は advisory、Hook は deterministic。
 
 判断表と Hook スニペット例 → [reference/handbook.md#観点-3-指示違反--文面改善-vs-hook-化](reference/handbook.md#観点-3-指示違反--文面改善-vs-hook-化)
+
+本観点で finding が複数出たり、ルール構造化抽出 → 違反検出 → 主因分類（曖昧プロンプト / ルール埋没 / 検証なし完了 / トリガミス / rot 起因）と 5 カテゴリの改善提案（プロンプト書き換え / ルール明文化 / Hook 化 / 巻き戻し運用 / skill description 改善）まで深掘りしたい場合は、深掘り専用の `detect-rework-and-violations` スキル（同プラグイン同梱、観点 2 と統合）を案内する。
 
 #### 観点 4: コンテキストロット
 

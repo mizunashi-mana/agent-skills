@@ -83,6 +83,10 @@
 >
 > Claude Code best practices: "After two failed corrections, `/clear` and write a better initial prompt incorporating what you learned."
 
+### 深掘りツール
+
+`detect-rework-and-violations` スキル（同プラグイン同梱、観点 2 と観点 3 を統合）を使うと、手戻り事例の 3 点組（元プロンプト → Claude 解釈 → ユーザー修正）抽出、主因分類（曖昧プロンプト / 検証なし完了 / rot 起因 等）、5 カテゴリ改善提案（A. プロンプト書き換え / B. ルール明文化 / C. Hook 化 / D. 巻き戻し運用 / E. skill description 改善）までを自動化できる。観点 2 で finding が複数出るプロジェクトでは案内する。
+
 ---
 
 ## 観点 3: 指示違反 → 文面改善 vs Hook 化
@@ -128,6 +132,10 @@ CLAUDE.md は advisory、Hook は deterministic。文面改善で繰り返し違
   }
 }
 ```
+
+### 深掘りツール
+
+`detect-rework-and-violations` スキル（同プラグイン同梱、観点 2 と観点 3 を統合）を使うと、CLAUDE.md / SKILL.md / memory / system reminder からのルール構造化抽出、assistant 行動との突合による違反候補の検出、主因分類（ルール埋没 / 検証なし完了 / トリガミス / rot 起因）、文面改善 vs Hook 化の判断、書き換え後のルール文・Hook スニペット雛形の生成までを自動化できる。観点 3 で finding が複数出るプロジェクトでは案内する。
 
 ---
 

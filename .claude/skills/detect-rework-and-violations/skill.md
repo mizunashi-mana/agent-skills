@@ -1,0 +1,1 @@
+../../../plugins/agent-coach/skills/detect-rework-and-violations/SKILL.md

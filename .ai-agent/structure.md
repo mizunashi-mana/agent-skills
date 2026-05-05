@@ -38,6 +38,7 @@ agent-skills/
 │       ├── autodev-switch-to-default/                          # デフォルトブランチ切り替え
 │       ├── detect-context-rot/                                 # → plugins/agent-coach/.../SKILL.md への symlink（本リポジトリ自体での試用）
 │       ├── detect-missed-skill-triggers/                        # → plugins/agent-coach/.../SKILL.md への symlink（本リポジトリ自体での試用）
+│       ├── detect-rework-and-violations/                       # → plugins/agent-coach/.../SKILL.md への symlink（本リポジトリ自体での試用）
 │       ├── detect-token-hotspots/                              # → plugins/agent-coach/.../SKILL.md への symlink（本リポジトリ自体での試用）
 │       └── recommend-bash-allowlist/                           # → plugins/agent-coach/.../SKILL.md への symlink（本リポジトリ自体での試用）
 ├── .claude-plugin/                                             # プラグインマーケットプレイス定義
@@ -77,6 +78,8 @@ agent-skills/
 │           │   └── SKILL.md                                    # コンテキストロット深掘り（rot 始点推定 + クロスセッション傾向 + A〜E 改善提案）
 │           ├── detect-missed-skill-triggers/
 │           │   └── SKILL.md                                    # スキル/サブエージェント未トリガ検出 + description 改善案生成
+│           ├── detect-rework-and-violations/
+│           │   └── SKILL.md                                    # 手戻り（方向修正ループ）+ 指示違反の検出 + 5 カテゴリ改善提案
 │           ├── detect-token-hotspots/
 │           │   └── SKILL.md                                    # ターン単位のトークン消費 hot spot 検出 + 5 カテゴリ書き換え提案
 │           └── recommend-bash-allowlist/
