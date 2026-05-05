@@ -10,7 +10,7 @@ agent-skills provides reusable skills that power AI-agent-driven development wor
 
 - **autodev-init** — Interactively initialize a repository's AI agent development environment. Sets up steering documents (product/tech/market/plan/work), installs workflow skills, and generates project structure documentation.
 - **merge-dependabot-bump-pr** — Review and merge Dependabot version bump PRs with 4-point safety checks (release age, critical bugs, breaking changes, source diff).
-- **agent-coach** — Analyze recent Claude Code transcripts and suggest improvements to your prompts, skill definitions, memory entries, and context management.
+- **agent-coach** — A bundle of focused transcript-analysis skills, each targeting a single failure mode: `detect-context-rot`, `detect-token-hotspots`, `detect-rework-and-violations`, `detect-missed-skill-triggers`, `recommend-bash-allowlist`.
 
 ## Quick Start
 
@@ -27,7 +27,7 @@ Available plugins:
 
 - `autodev` — AI agent development environment scaffolding (the `autodev-init` skill).
 - `merge-dependabot-bump-pr` — Dependabot bump PR review and merge.
-- `agent-coach` — Transcript-based feedback on prompts, skills, memory, and context use.
+- `agent-coach` — Bundle of focused transcript-analysis skills (context rot, token hot spots, rework & violations, missed skill triggers, Bash allowlist recommendations).
 
 ## License
 
