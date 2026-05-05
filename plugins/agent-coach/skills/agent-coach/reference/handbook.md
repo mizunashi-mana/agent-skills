@@ -157,6 +157,10 @@ CLAUDE.md は advisory、Hook は deterministic。文面改善で繰り返し違
 - Drop debug log dumps
 ```
 
+### 深掘りツール
+
+`detect-context-rot` スキル（同プラグイン同梱）を使うと、セッション別 rot 始点ターンの推定、クロスセッション反復ファイル/コマンドの抽出、A〜E（断点 / Plan / Subagent / MEMORY.md / Compact Instructions）への分類までを自動化できる。観点 4 で複数 finding が出るプロジェクトでは案内する。
+
 ---
 
 ## 観点 5: スキル description 改善

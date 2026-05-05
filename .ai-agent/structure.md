@@ -36,6 +36,7 @@ agent-skills/
 │       ├── autodev-start-new-task/                             # タスク開始（トリアージ付き）
 │       ├── autodev-steering/                                   # steering ドキュメント更新
 │       ├── autodev-switch-to-default/                          # デフォルトブランチ切り替え
+│       ├── detect-context-rot/                                 # → plugins/agent-coach/.../SKILL.md への symlink（本リポジトリ自体での試用）
 │       └── recommend-bash-allowlist/                           # → plugins/agent-coach/.../SKILL.md への symlink（本リポジトリ自体での試用）
 ├── .claude-plugin/                                             # プラグインマーケットプレイス定義
 │   └── marketplace.json
@@ -70,6 +71,8 @@ agent-skills/
 │       └── skills/
 │           ├── agent-coach/
 │           │   └── SKILL.md                                    # transcript 分析によるプロンプト・スキル・メモリ改善提案
+│           ├── detect-context-rot/
+│           │   └── SKILL.md                                    # コンテキストロット深掘り（rot 始点推定 + クロスセッション傾向 + A〜E 改善提案）
 │           └── recommend-bash-allowlist/
 │               └── SKILL.md                                    # auto / bypassPermissions モード下の Bash 実績から allowlist 推薦
 ├── template/                                                   # スキル作成テンプレート
