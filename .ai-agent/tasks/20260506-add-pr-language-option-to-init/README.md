@@ -39,7 +39,7 @@
 - [x] `plugins/autodev/skills/autodev-init/SKILL.md` に言語選択ステップとカスタマイズ手順を追加
 - [x] `plugins/autodev/skills/autodev-init/templates/skills/autodev-create-pr/SKILL.md` の言語固定箇所をカスタマイズ可能な形に整理
 - [x] `python3 scripts/validate-skills.py` が通る
-- [ ] PR を作成（`/autodev-create-pr`）
+- [x] PR を作成（`/autodev-create-pr`） → https://github.com/mizunashi-mana/agent-skills/pull/17
 
 ## 作業ログ
 
