@@ -37,17 +37,18 @@
 
 ### 新規スキルの追加
 
-1. `skills/{skill-name}/` ディレクトリを作成
-2. `SKILL.md` を作成（YAML フロントマター + Markdown 本文）
-3. 必要に応じてリソースディレクトリ（`templates/`, `reference/` 等）を追加
-4. `.claude-plugin/marketplace.json` にバンドル登録（必要に応じて）
-5. `README.md` にスキルの説明を追加
+1. 配置先プラグインを決める（既存プラグインに追加するか、新規プラグインを作るか）
+2. `plugins/<plugin-name>/skills/<skill-name>/` ディレクトリを作成
+3. `SKILL.md` を作成（YAML フロントマター + Markdown 本文）
+4. 必要に応じてリソースディレクトリ（`templates/`, `reference/` 等）を追加
+5. 新規プラグインの場合は `plugins/<plugin-name>/.claude-plugin/plugin.json` を作成し、`.claude-plugin/marketplace.json` にバンドル登録
+6. `README.md` にスキルの説明を追加
 
 ### 既存スキルの移植（dotfiles から）
 
 1. dotfiles の対応スキルを読み込み、内容を把握
 2. anthropics/skills の規約に合わせてフォーマット調整（フロントマター形式等）
-3. `skills/{skill-name}/` に配置
+3. `plugins/<plugin-name>/skills/<skill-name>/` に配置
 4. テンプレートやサブリソースがある場合はディレクトリ構造ごと移植
 
 ### スキルの動作確認

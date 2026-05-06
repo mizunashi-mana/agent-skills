@@ -24,11 +24,19 @@ agent-skills/
 │   │       └── autodev-init/                                   # リポジトリ初期化スキル
 │   │           ├── SKILL.md
 │   │           └── templates/                                  # steering / サブスキルテンプレート
-│   └── merge-dependabot-bump-pr/                               # merge-dependabot-bump-pr プラグイン
+│   ├── merge-dependabot-bump-pr/                               # merge-dependabot-bump-pr プラグイン
+│   │   ├── .claude-plugin/plugin.json
+│   │   └── skills/
+│   │       └── merge-dependabot-bump-pr/
+│   │           └── SKILL.md
+│   └── agent-coach/                                            # agent-coach プラグイン（transcript 分析スキル束）
 │       ├── .claude-plugin/plugin.json
 │       └── skills/
-│           └── merge-dependabot-bump-pr/
-│               └── SKILL.md
+│           ├── detect-context-rot/SKILL.md
+│           ├── detect-missed-skill-triggers/SKILL.md
+│           ├── detect-rework-and-violations/SKILL.md
+│           ├── detect-token-hotspots/SKILL.md
+│           └── recommend-bash-allowlist/SKILL.md
 ├── template/
 │   └── SKILL.md                                                # スキル作成用テンプレート
 ├── CLAUDE.md
@@ -52,6 +60,7 @@ agent-skills/
 
 - **autodev**: autodev-init スキル（サブスキルテンプレートを含む）
 - **merge-dependabot-bump-pr**: Dependabot PR マージスキル
+- **agent-coach**: transcript 分析スキル束（detect-context-rot / detect-token-hotspots / detect-rework-and-violations / detect-missed-skill-triggers / recommend-bash-allowlist）
 
 利用者は次の手順でインストールできる:
 
@@ -59,6 +68,7 @@ agent-skills/
 /plugin marketplace add mizunashi-mana/agent-skills
 /plugin install autodev
 /plugin install merge-dependabot-bump-pr
+/plugin install agent-coach
 ```
 
 ## 開発環境
