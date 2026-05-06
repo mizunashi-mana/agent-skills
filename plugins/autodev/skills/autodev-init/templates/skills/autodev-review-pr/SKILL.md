@@ -77,8 +77,6 @@ reviewer のレビュー結果サマリーをユーザーに報告する。
 Skill({ skill: "autodev-import-review-suggestions", args: "{PR番号}" })
 ```
 
-**重要**: 自動チェーンであっても、修正適用前に必ずユーザーの承認を取る必要がある。`autodev-import-review-suggestions` 側の手順 3「ユーザーに確認」を必ず通すこと。チェーン経由だからといってユーザー承認を省略してはならない。
-
 推奨アクションが APPROVE の場合は、この手順をスキップしてタスク完了。
 
 ## 注意事項
