@@ -78,11 +78,12 @@ allowed-tools: Read, Write, Edit, MultiEdit, Update, WebSearch, WebFetch, "Bash(
 
 完了処理は次の順序で行う。**PR URL を反映するための追加コミット + push を必ず最後に実行すること**（省略するとブランチ上に未 push の変更が残り、レビュー時の差分とローカルが乖離する）。
 
-1. **README に完了条件・作業ログを記載**:
+1. **README に完了条件・作業ログを記載してコミット**:
    - 完了条件のうち、PR 作成項目はこの時点ではまだチェックしない（PR URL が未確定のため）
    - それ以外の完了条件をチェックし、作業ログに結果を記載
+   - 実装変更とまとめて `git add` + `git commit` する（`/autodev-create-pr` は未コミット変更があると先にコミットを促す挙動なので、ここで commit を済ませておく）
 2. **PR を作成**:
-   - `/autodev-create-pr` を使用する（ここで実装 + README 変更がコミット + push され、PR URL が返る）
+   - `/autodev-create-pr` を使用する（push + PR 作成を行い、PR URL を返す）
 3. **PR URL を README に反映**:
    - 完了条件の「PR を作成」項目をチェックし、PR URL を併記する
      - 例: `- [x] PR を作成（\`/autodev-create-pr\`） → https://github.com/<owner>/<repo>/pull/<番号>`

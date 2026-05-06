@@ -45,6 +45,7 @@
   - `plugins/autodev/skills/autodev-init/templates/skills/autodev-start-new-task/SKILL.md`（配布テンプレート）
 - 文面はテンプレートと dogfood 版で揃えた
 - `python3 scripts/validate-skills.py` 実行: 23 ファイル / 0 エラー
+- 既知の積み残し: 完了時 step 2 の括弧書きで「ここで実装 + README 変更がコミット + push され」と記載しているが、`/autodev-create-pr` 自体は commit を行わず未コミット状態だと停止する仕様なので文言が不正確 → 後続コミットで修正
 
 ### 2026-05-06: allowed-tools へ git 系 + Skill 呼び出しを追記
 
@@ -57,3 +58,15 @@
   - `Skill(autodev-create-pr)`（完了時 2 の PR 作成）
   - `Skill(autodev-discussion)` / `Skill(autodev-start-new-survey)` / `Skill(autodev-start-new-project)`（手順 1 のトリアージ・ルーティング先）
 - `python3 scripts/validate-skills.py` 実行: 23 ファイル / 0 エラー
+
+### 2026-05-06: PR #18 レビュー指摘（Warning）への対応
+
+- 指摘: 完了時 step 2 の「`/autodev-create-pr` を使用する（ここで実装 + README 変更がコミット + push され、PR URL が返る）」という文言が、`/autodev-create-pr` の実態（commit はせず、未コミット状態だと停止）と乖離しており、step 1 では README 編集のみで commit を指示していない
+- 対応: reviewer 提案 Option A を採用
+  - step 1 の見出しを「README に完了条件・作業ログを記載してコミット」に変更し、明示的に `git add` + `git commit` の指示を追加
+  - step 2 の括弧書きを「push + PR 作成を行い、PR URL を返す」に修正
+- 反映先 2 ファイル:
+  - `.claude/skills/autodev-start-new-task/skill.md`（dogfood 版）
+  - `plugins/autodev/skills/autodev-init/templates/skills/autodev-start-new-task/SKILL.md`（配布テンプレート）
+- `python3 scripts/validate-skills.py` 実行: 23 ファイル / 0 エラー
+- 自己レビュー（PR #18）の結論: COMMENT, Critical 0 / Warning 1 / Info 3。Warning は本コミットで解消
