@@ -179,9 +179,9 @@
 
 検証結果: `python3 scripts/validate-skills.py` → 23 ファイル 0 error。
 
-### 2026-05-06: fresh-agent 第 2 ラウンド検証は中断
+### 2026-05-06: fresh-agent 第 2 ラウンド検証は当初中断 → 後で再実行
 
-修正後 SKILL.md を独立 fresh-agent (general-purpose) で同一 10 セッションに対して試用させようとしたが、Anthropic API のレート制限（13:30 Asia/Tokyo リセット）に当たって 11 tool uses で停止。`.ai-agent/tmp/20260506-token-hotspots/report-fresh.md` は未生成。
+修正後 SKILL.md を独立 fresh-agent (general-purpose) で同一 10 セッションに対して試用させようとしたが、初回は Anthropic API のレート制限（13:30 Asia/Tokyo リセット）に当たって 11 tool uses で停止。`.ai-agent/tmp/20260506-token-hotspots/report-fresh.md` は未生成。
 
 代替検証として、本会話セッション内で生成した `report.md` (5/6 10:05、自分自身が改訂版 SKILL.md 由来の方針で書いた) と、独立した別エージェントが事前に生成していた `report-prev-trial.md` (5/6 0:12、改訂前 SKILL.md 由来) を比較:
 
@@ -190,4 +190,37 @@
 - 改訂版で新規提案: A-ii (`structure.md` を CLAUDE.md inline) と A-iv (heredoc → /tmp 経由)
 - 改訂版の凡例 (`cc / cr / miss%`) と各 Axis 1 行注釈は読み手の単独理解を助ける
 
-→ fresh-agent 検証は次回別セッションで実施可能（PR レビュー時の追補で構わない）。
+### 2026-05-06: fresh-agent 第 2 ラウンド再実行（レート制限解除後）
+
+レート制限解除後に再実行し成功。`.ai-agent/tmp/20260506-token-hotspots/report-fresh.md` (346 行) を生成。22 tool uses / 10.3 分。
+
+#### 改善が確認できた点
+
+| 観点 | 結果 |
+| --- | --- |
+| SKILL.md の追従性 | 手順 1-7 を end-to-end で実行可能。詰まったのは miss バー記法の不統一とターン分割挙動の説明だけ |
+| A.2 plateau 検出 | 8 件全て妥当、**偽陽性 0**。改訂前見逃していた Read+Bash plateau (`48004602:t13-16` cc=46,286 × 4) も捕捉 |
+| Axis E TaskCreate 除外 | 正しく発火。`c3261d15:t29-35` / `a9ae8bc9:t13-21` / `713c1fe2:t61-68` を除外、`48004602:t7-16` の研究区間は維持 |
+| TL;DR 用語凡例 | 有用。各 Axis 1 行注釈もセッション別 hot spot 章で迷わずに済む |
+| 5.3 attachment-based MCP | 妥当。10 セッション全てで 5 server (Gmail/Calendar/Drive/html-artifacts-preview/playwright) が完全未使用かつ deferred tools の ~70% を占めると正確に検出 |
+| 推奨 TOP3 一致度 | 本評価セッションの結論と一致 (A-ii: structure.md / D: 5 MCP 切り離し / B: 重い調査委譲) |
+
+#### fresh-agent が指摘した残改善点（8 件、全件反映）
+
+| # | 指摘 | 反映先 |
+| ---: | --- | --- |
+| 1 | miss バー記法 (`[##__#####_]` vs `# #_ __ #_ ##`) が混在 | レポート雛形を **連結 10 文字 (`<sid>: ##__#####_`) に統一** |
+| 2 | A.2 (ii) の例 `c3261d15:t29-35` は「複数 assistant メッセージ連続」、1 メッセージ内 parallel tool_use とは別物 | A.2 (ii) の説明を厳密化、両者の違いを 1 行で明記 |
+| 3 | Read+Bash plateau (`48004602:t13-16` 等) が (i)(ii)(iii) いずれにも当てはまらない | **A.2 (iv) Read/Bash 連続でも同 cache 状態が短時間で発生したケース** を解釈表に追加 |
+| 4 | `Edit×1 + Read×3` のような「修正のための調査 + 局所適用」が Axis E で誤って除外される懸念 | **「Edit < 30% かつ Read 主体は除外しない」** という非除外条件を明示 |
+| 5 | A-ii の inline 例が抽象的、初見で何行抜き出せばいいか分からない | A-ii に **CLAUDE.md 出力サンプル (10-15 行) を提示** |
+| 6 | 単一 MCP は 30% 未到達でも、合算で 70% を占めるケースが Tier 1 に明記されていない | Tier 1 に **「0 呼び出し MCP 群を合算して deferred tools の 30%+ を占める場合」** を追加 |
+| 7 | 5.5 のしきい値が曖昧（「30 分以上」とだけ書いてある） | 5.5 注意欄に **「<30 min は表示しない / 30-60 min は注記のみ / >60 min かつ 1h 系再書き込みありで TTL 切れ疑い」** を明示 |
+| 8 | reference/implementation.md のサンプルが `print(json.dumps(...))` で標準出力に直接 dump し、A-iv 違反を犯しやすい | reference 冒頭に **A-iv 自己参照警告と `> /tmp/foo.json + Read(limit=)` 書き換え例** を配置 |
+
+サイズ変化（第 2 ラウンド反映後）:
+
+- SKILL.md: 483 → 507 行 (+24)。chars +1,300 程度。Axis E 非除外条件・A-ii サンプル・A.2 (iv) 追加分
+- reference/implementation.md: 279 → 288 行 (+9)。A-iv 自己参照警告分
+
+検証結果: `python3 scripts/validate-skills.py` → 23 ファイル 0 error。

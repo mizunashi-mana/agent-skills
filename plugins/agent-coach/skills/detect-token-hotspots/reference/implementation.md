@@ -4,6 +4,15 @@
 
 完全実装は不要 — Claude が transcript を読み取り上記指標を集計できれば良い。集計が複雑になりすぎたら **1〜2 セッションだけ手で読み込み**、定性的に finding を作っても十分価値がある（このスキルのゴールは「ユーザーが次の書き換えを選べる」こと）。
 
+> **自己参照警告 (A-iv)**: 以下のサンプルが大きな結果を `print(json.dumps(...))` で標準出力に流すと、それ自体が「巨大 heredoc 出力」(SKILL.md A-iv) に該当して検出対象になる。出力が >5KB になりそうなときは必ず:
+> ```bash
+> python3 - <<'PY' > /tmp/result.json
+> # 集計コード
+> print(json.dumps(result, ensure_ascii=False))
+> PY
+> ```
+> のように **`> /tmp/foo.json` にリダイレクトしてから `Read(file_path="/tmp/foo.json", limit=120)` で部分参照** する。本サンプルでも要点だけ短く print しているのはこのため。
+
 ## 1. ターン単位の usage / tool_result 集計（v2.1.x JSONL 対応）
 
 ```python
