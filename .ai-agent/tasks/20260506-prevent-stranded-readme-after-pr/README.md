@@ -25,7 +25,7 @@
 - [x] `.claude/skills/autodev-start-new-task/skill.md` の「完了時」セクションを更新
 - [x] `plugins/autodev/skills/autodev-init/templates/skills/autodev-start-new-task/SKILL.md` の「完了時」セクションを更新（同等の文面）
 - [x] `python3 scripts/validate-skills.py` が成功する
-- [ ] PR を作成（`/autodev-create-pr`）
+- [x] PR を作成（`/autodev-create-pr`） → https://github.com/mizunashi-mana/agent-skills/pull/18
 
 ## 作業ログ
 
