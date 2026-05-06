@@ -1,6 +1,6 @@
 ---
 description: Start a new implementation task with branch, README, and structured workflow. Use when beginning a feature, bug fix, or improvement that takes a day to a few days.
-allowed-tools: Read, Write, Edit, MultiEdit, Update, WebSearch, WebFetch
+allowed-tools: Read, Write, Edit, MultiEdit, Update, WebSearch, WebFetch, "Bash(git checkout -b *)", "Bash(git status *)", "Bash(git add *)", "Bash(git commit *)", "Bash(git push *)", Skill(autodev-create-pr), Skill(autodev-discussion), Skill(autodev-start-new-survey), Skill(autodev-start-new-project)
 ---
 
 # 新規タスク開始

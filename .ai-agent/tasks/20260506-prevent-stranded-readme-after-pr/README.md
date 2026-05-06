@@ -45,3 +45,15 @@
   - `plugins/autodev/skills/autodev-init/templates/skills/autodev-start-new-task/SKILL.md`（配布テンプレート）
 - 文面はテンプレートと dogfood 版で揃えた
 - `python3 scripts/validate-skills.py` 実行: 23 ファイル / 0 エラー
+
+### 2026-05-06: allowed-tools へ git 系 + Skill 呼び出しを追記
+
+- 動機: 新しい完了フローが `git add` / `git commit` / `git push` / `git status` と `/autodev-create-pr` 呼び出しを要求するが、frontmatter の allowed-tools にこれらが入っていなかったため、毎回の許可プロンプトが発生する状態だった
+- Claude Code 公式ドキュメント（[skills.md#pre-approve-tools-for-a-skill](https://code.claude.com/docs/en/skills.md#pre-approve-tools-for-a-skill)）に従い、スラッシュコマンド呼び出しは `Skill(<skill-name>)` 形式で許可する
+- `allowed-tools` への追記内容（dogfood 版・配布テンプレート両方）:
+  - `Bash(git checkout -b *)`（手順 7 のブランチ作成）
+  - `Bash(git status *)`（完了時 5 のクリーン確認）
+  - `Bash(git add *)` / `Bash(git commit *)` / `Bash(git push *)`（完了時 4 の追加コミット + push）
+  - `Skill(autodev-create-pr)`（完了時 2 の PR 作成）
+  - `Skill(autodev-discussion)` / `Skill(autodev-start-new-survey)` / `Skill(autodev-start-new-project)`（手順 1 のトリアージ・ルーティング先）
+- `python3 scripts/validate-skills.py` 実行: 23 ファイル / 0 エラー
