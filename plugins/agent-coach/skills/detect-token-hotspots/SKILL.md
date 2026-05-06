@@ -1,5 +1,5 @@
 ---
-description: Analyze recent Claude Code transcripts to detect per-turn token consumption hot spots (cache miss spikes, oversized tool_result, output bloat, MCP definition weight) and suggest concrete remediation across five categories — tool-call rewrites (offset/limit, Grep substitution), subagent delegation, cache strategy, MCP unloading, and conversation breakpoints. Use when sessions feel token-heavy, you want to find which turns consume the most tokens and why, or you need actionable rewrites for the worst-offending tool calls.
+description: Analyze recent Claude Code transcripts to detect per-turn token consumption hot spots (single-turn cache miss spikes, multi-turn cc plateaus from parallel tool calls / ToolSearch, oversized tool_result, output bloat, MCP definition weight) and suggest concrete remediation across five categories — tool-call rewrites (offset/limit, Grep substitution, CLAUDE.md inlining of small repeat-read docs, heredoc redirect-to-tmp), subagent delegation, cache strategy, MCP unloading, and conversation breakpoints. Use when sessions feel token-heavy, you want to find which turns consume the most tokens and why, or you need actionable rewrites for the worst-offending tool calls.
 allowed-tools: Bash, Read, Write, Glob, Grep
 ---
 
@@ -10,7 +10,7 @@ allowed-tools: Bash, Read, Write, Glob, Grep
 ユーザーの transcript JSONL を分析し、**トークン消費の hot spot**（特に消費の激しいターン・反復パターン）を検出する特化スキル。本スキルは:
 
 1. ターン単位で usage 4 種（input / output / cache_creation / cache_read）と `tool_result` サイズを集計
-2. 複数軸（cache miss / tool_result 肥大 / output 過多）で hot spot ターン TOP N を抽出
+2. 複数軸（cache miss スパイク / **N 連続ターン cc plateau** / tool_result 肥大 / output 過多）で hot spot ターン TOP N を抽出
 3. クロスセッションで反復する高消費パターン（同一ファイル再 Read、巨大 Bash 出力、MCP 定義肥大、サブエージェント未活用）を集約
 4. 改善提案を 5 カテゴリ（**A. ツール呼び出し置換 / B. サブエージェント委譲 / C. cache 戦略 / D. MCP 切り離し / E. 断点**）に分類して具体的な書き換え案を提示
 
@@ -33,16 +33,25 @@ allowed-tools: Bash, Read, Write, Glob, Grep
 
 ### 2. JSONL の構造把握（hot spot 検出に使うフィールド）
 
+Claude Code v2.1.x 系の transcript で参照する主なレコード:
+
 | 場所 | 用途 |
 | --- | --- |
-| `type == "assistant"` の `message.usage` | トークン内訳（input / output / cache_creation / cache_read） |
-| `assistant.message.content[]` のうち `type == "tool_use"` | このターンで呼ばれたツール名・引数 |
-| 直後の `user.message.content[]` のうち `type == "tool_result"` | ツール出力本体（文字数集計対象） |
-| `type == "system"` の reminder | MCP / スキル / サブエージェント定義テキスト（文字数 = 定義オーバーヘッド） |
+| `type == "assistant"` の `message.usage` | トークン内訳（`input_tokens` / `output_tokens` / `cache_creation_input_tokens` / `cache_read_input_tokens`）+ `cache_creation.ephemeral_1h_input_tokens` / `ephemeral_5m_input_tokens` |
+| `assistant.message.content[]` のうち `type == "tool_use"` | このターンで呼ばれたツール名・引数（`name`, `input`, `id`） |
+| 後続 `user.message.content[]` のうち `type == "tool_result"` | ツール出力本体（`tool_use_id` で突合、`content` の文字数を集計） |
+| `type == "attachment"` の `attachment.type == "deferred_tools_delta"` | **MCP / 標準 deferred tool の登録**。`addedNames` 配列にツール名を列挙。MCP overhead はここから推定（`mcp__<server>__<tool>` の形式） |
+| `type == "user"` の `<command-name>/<command-args>` 埋め込み | slash command 呼び出し（セッショントピック識別に使う） |
+| `type == "system"` の `subtype == "turn_duration"` | ターン所要時間メタデータ（reminder ではない、注意） |
 | `type == "permission-mode"` | モード切替（auto / plan / default 等） |
-| 各レコードの timestamp / 記録順 | ターン番号 N の決定 |
+| `type == "file-history-snapshot"` / `type == "last-prompt"` / `type == "pr-link"` | 集計対象外。スキップ可 |
+| 各レコードの `timestamp` / 記録順 | ターン番号 N の決定 |
 
-**1 ファイル全文 Read は避ける**。1MB 超のファイルは `Bash` で `wc -l` → `python3` ヒアドキュメントで集計する（実装ヒント参照）。
+注意:
+
+- **`type == "system"` は MCP/スキル定義を含まない**（v2.1.x 以降）。MCP overhead は `attachment.deferred_tools_delta.addedNames` から推定する
+- ターン番号は `type == "assistant"` を 1 件 1 ターンとして counter で振る。**parallel tool_use を 1 ターンに集約しない**（後述の Axis A.2 plateau 検出で 1 ターン 1 invocation 扱いが必要）
+- **1 ファイル全文 Read は避ける**。1MB 超は `Bash` で `wc -l` → `python3` ヒアドキュメントで集計する（実装ヒント参照）
 
 ### 3. ターン単位の指標抽出
 
@@ -75,9 +84,25 @@ allowed-tools: Bash, Read, Write, Glob, Grep
 
 #### 軸 A: cache_creation スパイク
 
-- `cache_creation_input_tokens` が大きい順に上位 10 ターン
+cache_creation には **2 つの異なるパターン**がある。両方を独立に集計する。
+
+##### A.1 単発スパイク
+
+- `cache_creation_input_tokens` が大きい順に上位 10 ターン（直前ターンと cc 値が異なるもの）
 - ターン N、ツール名、引数要約、cache_creation 値、直前ターンとの差分を記録
-- **解釈**: cache miss が多発しているターン。原因候補は (i) 巨大 tool_result の挿入、(ii) 5 分以上の中断による cache 失効、(iii) システム reminder の差し替え
+- **解釈**: 単一ターンで大きな cache miss。原因候補は (i) 巨大 tool_result の挿入、(ii) 1 時間以上の中断による cache 失効、(iii) attachment / system 構成の差し替え
+
+##### A.2 N 連続ターン cc plateau（**見落としやすい**）
+
+- **連続する 2 ターン以上で cc 値が完全一致** している区間を検出（差が 1% 以内）
+- 各 plateau の (start_turn, end_turn, plateau_cc, N, tools_in_segment) を記録
+- 累積 cost = `plateau_cc × N` を併記
+- **解釈**: モデル billing の特性で「同じ prompt 状態の API call が立て続けに発生したとき、各 invocation が同じ cc を billed される」という挙動。代表ケース:
+  - **(i) ToolSearch 直後の deferred tool schema load**: ToolSearch で新しいツール schema が context に追加されると、その直後 1〜数ターンが (cache 反映前のため) 同 cc を billed される。例: `b277cc6e:t43-44` で ToolSearch → cc=76,537 が 2 連続
+  - **(ii) parallel tool_use batch**: TaskCreate / TaskUpdate / Bash などを並列に N 個呼ぶと、N 連続ターン分が同じ cache 状態のまま billed される。例: `c3261d15:t29-35` で TaskCreate ×6 + Bash → cc=43,070 が 7 連続 = **301K cc** がこの 1 回のバッチで発生
+  - **(iii) 起動直後の system prompt 確立**: セッション最初の数ターンで同 cc 値が並ぶ
+- **重要**: 単発スパイクと違い、plateau の cc 値そのものは「正常な cache write 量」と解釈すべき場合がある。N 倍の billing は parallel batch の不可避コストで、ユーザーが直接削減できない。ただし **(i) は ToolSearch 呼び出しを序盤にまとめる**ことで部分削減できる
+- 1 セッション内で plateau cost 合計 (≥ 100K) が cc 累計の 30% 超を占める場合、改善提案 C「cache 戦略」で言及
 
 #### 軸 B: tool_result サイズ過多
 
@@ -93,13 +118,16 @@ allowed-tools: Bash, Read, Write, Glob, Grep
 
 #### 軸 D: cache miss 比率（系列）
 
-- ターン単位の cache miss 比率を時系列でプロット（テキスト表で代用可: `[##__#####_]` のような簡易ヒストグラム）
+- ターン単位の cache miss 比率を 10 ビンに集約してプロット（テキスト: `[##__#####_]`、`#` = miss% > 5%）
 - セッション後半で急に miss 比率が上がっていれば「断点 or 大きな差し替えイベント」のサイン
+- **典型パターン**: 起動 (turn 1-3) は cc が高く 1-2 ビンが `#` になる。これは system prompt + skill description + attachment の cache 確立で**不可避**。ビン 4 以降の `#` のみ介入対象
 
-#### 軸 E: 連続消費区間
+#### 軸 E: 連続消費区間（サブエージェント委譲候補）
 
 - 連続する 5 ターン以上で cache_creation が継続的に高い（各ターン > セッション平均 × 1.5）区間
 - **解釈**: 重い調査フェーズ。サブエージェント委譲の候補
+- **除外条件（誤検出回避）**: 区間内のツール呼び出しの **>50% が `TaskCreate` / `TaskUpdate` / `TaskList`** の場合は「タスク設定」として **委譲対象から除外**。これらは task setup であり Explore に投げるユースケースではない（A.2 plateau の方で言及）
+- 同様に区間内が `Write` のみ（成果物生成）や `Edit` のみ（局所修正）の場合も委譲対象から外す。委譲が真に効くのは **`Read` / `Bash` / `Grep` / `Glob` が支配的**な調査区間のみ
 
 ### 5. クロスセッション傾向の抽出
 
@@ -119,9 +147,16 @@ allowed-tools: Bash, Read, Write, Glob, Grep
 
 #### 5.3 MCP / システム定義オーバーヘッド
 
-- `type == "system"` レコードのうち「Available tools」「following skills」「following deferred tools」セクションの文字数
-- 特に `mcp__*` ツール定義の合計文字数（active MCP が多いと数千〜数万文字が毎ターン input に乗る）
-- セッション間で文字数が大きく違えば「MCP 構成差」がトークン差の主因
+抽出元は **`type == "attachment"` の `attachment.type == "deferred_tools_delta"`**（`type == "system"` ではない）。1 セッションあたり 1〜数件の delta レコードに `addedNames` 配列で全 deferred tool 名が列挙される。
+
+- `addedNames` から `mcp__<server>__<tool>` 形式を抽出 → MCP server 別に集計
+- セッションごとに「露出 MCP server リスト」「合計 deferred tool 数」「name list の総 chars」を記録
+- セッション横断で集計し、**全セッションで `mcp__*` ツール呼び出しが 0 件の MCP** を「未使用」候補として列挙
+
+注意:
+
+- v2.1.x の Claude Code は **MCP/deferred ツールの schema を遅延ロード**（必要時に `ToolSearch` で fetch）するため、未使用 MCP が context に乗せるのは **名前リスト ~5KB/セッション** のみ。schema 量は乗らない
+- したがって「不要 MCP 切り離し」の効果は中程度（数 KB / セッション）。Tier 1 推奨アクションに昇格させるのは「**全セッションで呼び出し 0 件**」かつ「**deferred tool 数の 30% 以上を占める MCP**」のみ
 
 #### 5.4 サブエージェント未活用な重い調査
 
@@ -130,8 +165,14 @@ allowed-tools: Bash, Read, Write, Glob, Grep
 
 #### 5.5 中断起因の cache miss
 
-- 同一セッション内で隣接 assistant ターンの timestamp 差が 5 分以上
-- 直後のターンで cache_read が急減 / cache_creation が急増 → **キャッシュ失効**シグナル
+- 同一セッション内で隣接 assistant ターンの timestamp 差が 5 分以上のギャップを抽出
+- **判定**: 直後のターンの `cache_creation_input_tokens` が直前ターンより大きく増え、`cache_read_input_tokens` が急減した時のみ "失効シグナル"
+
+注意（誤検出回避）:
+
+- 現行 Claude Code は `cache_creation.ephemeral_1h_input_tokens` を主に使用（1 時間 TTL）。**5 分のギャップでは cache はほぼ確実に維持される**ため、5 分閾値だけだと誤検出が多い
+- 検出時は usage の `cache_creation.ephemeral_1h_input_tokens` と `ephemeral_5m_input_tokens` を併用し、**「1h cache を再書き込みしている」場合のみ TTL 切れと判定**。30 分以上 + 1h 系も増えている場合に絞ると精度が上がる
+- 観測データでは 16 分ギャップ後でも next miss% < 1% の事例があるため、5 分閾値は**情報提供レベル** に留め、TOP3 推奨にはあげない
 
 ### 6. 改善提案カテゴリへのマッピング
 
@@ -139,13 +180,45 @@ allowed-tools: Bash, Read, Write, Glob, Grep
 
 #### A. ツール呼び出し置換（最も即効性が高い）
 
-- 適用条件: 軸 B / 5.1 / 5.2 で「不要に大きな出力」を取り込んでいる
-- 出力例:
-  - `Read(file_path="/path/big.log")` → `Read(file_path="/path/big.log", offset=0, limit=200)` または `Grep(pattern="ERROR", path="/path/big.log")`
-  - `Bash(command="git log")` → `Bash(command="git log --oneline -30")`
-  - `Bash(command="find . -name '*.ts'")` → `Glob(pattern="**/*.ts")`
-  - `Read` 全文取得が大きすぎる → 必要な関数だけ `Grep -n` でアタリ → 該当行の `offset/limit` で再 Read
-- 書き換え後の推定削減トークンも併記する（tool_result 文字数 × 0.25 を目安に概算）
+適用条件: 軸 B / 5.1 / 5.2 で「不要に大きな出力」を取り込んでいる。書き換え後の推定削減トークンも併記する（tool_result 文字数 × 0.25 を目安に概算）。サブカテゴリ:
+
+##### A-i 大きいファイルの Read 絞り込み
+
+- `Read(file_path="/path/big.log")` → `Read(file_path="/path/big.log", offset=0, limit=200)` または `Grep(pattern="ERROR", path="/path/big.log")`
+- 必要な関数だけ `Grep -n` でアタリを付ける → 該当行を `offset/limit` で再 Read
+- 適用例: 10KB+ の SKILL.md / 設定ファイル / log file
+
+##### A-ii 小サイズ project metadata の反復 Read → CLAUDE.md inline
+
+- 適用条件: **<10KB の小ファイル**（例: `.ai-agent/structure.md`、`steering/plan.md`、`CONTRIBUTING.md` 概要）が**複数セッションで毎回 Read されている**（5 セッション以上）
+- 書き換え: ファイル全文を Read し続ける代わりに、**主要部分の要約を `CLAUDE.md` に inline** する。CLAUDE.md は cache に乗るため毎セッション追加 Read コストが消える
+- 詳細が必要なときだけ `Read(path, offset=N, limit=80)` で部分参照
+- 出力例（提案レベルで何を書くか）:
+  - 「`structure.md` (7,766c × 11 セッション = 累計 70KB) → CLAUDE.md に "## ディレクトリ構成 (要約)" として 10-15 行で抜粋。詳細参照時のみ部分 Read」
+  - 「`plan.md` の `## 現在のフェーズ` 3-5 行を CLAUDE.md に inline」
+
+##### A-iii Bash 系の出力絞り
+
+- `Bash("git log")` → `Bash("git log --oneline -30")`
+- `Bash("find . -name '*.ts'")` → `Glob(pattern="**/*.ts")`
+- `Bash("grep -rn ...")` → `Grep(pattern, path, output_mode="content", -n=true, head_limit=30)`
+- 適用例: 単発で 5KB+ の Bash 出力
+
+##### A-iv 巨大 Bash heredoc 出力 → ファイル経由
+
+- 適用条件: `python3 - <<PY ... PY` 等の heredoc で **5KB+ の JSON / dump を直接出力**している（Bash には offset/limit が無いため、出力丸ごと tool_result に乗る）
+- 書き換え:
+  ```bash
+  python3 - <<'PY' > /tmp/result.json
+  ... 集計コード ...
+  PY
+  ```
+  ↓
+  ```
+  Read(file_path="/tmp/result.json", limit=120)
+  ```
+- 効果: tool_result の 60-80% 削減 + 後続ターンで `Grep`/再 `Read` で部分参照可能になる
+- 適用例: 集計用 heredoc、巨大 SQL dump、JSON ダンプ
 
 #### B. サブエージェント委譲
 
@@ -157,19 +230,22 @@ allowed-tools: Bash, Read, Write, Glob, Grep
 
 #### C. cache 戦略
 
-- 適用条件: 軸 A / 軸 D / 5.5 で「cache miss が頻発」
-- 出力例:
-  - 5 分以上の中断 → 短時間で続けるか、いったん `/clear` して新セッションで再開
-  - 巨大 tool_result の都度挿入 → サブエージェント委譲（B）または事前にファイル化して `Read` で部分参照
-  - 長期セッション後半で miss 比率上昇 → `/compact` で古いツール出力を圧縮
+適用条件: 軸 A / 軸 D / 5.5 で「cache miss が頻発」。サブカテゴリ:
+
+- **巨大 tool_result の都度挿入** → サブエージェント委譲（B）または事前にファイル化して `Read` で部分参照（A-iv）
+- **長期セッション後半で miss 比率上昇** → `/compact` で古いツール出力を圧縮
+- **ToolSearch 連発による A.2 plateau** → 同セッションで複数回 deferred ツールをロードしている場合、序盤に `ToolSearch("select:Tool1,Tool2,Tool3")` で **必要分をまとめて一度にロード**。中盤以降の追加 ToolSearch を減らせば plateau billing コストを削減できる
+- **30 分以上の中断 + 1h cache 失効シグナル** → 短時間で続けるか、いったん `/clear` して新セッションで再開
+- 5 分程度の中断は 1h ephemeral cache が効くため介入不要（5.5 の注意参照）
 
 #### D. MCP 切り離し
 
-- 適用条件: 5.3 で「不要 MCP の定義が毎ターン input に乗っている」
+- 適用条件: 5.3 で「全セッション 0 呼び出しの MCP が deferred tools の 30%+ を占めている」
 - 出力例:
-  - `~/.claude/settings.json` または `<repo>/.claude/settings.json` の `disabledMcpServers` に該当 MCP 名を追加
+  - `<repo>/.claude/settings.json` または `~/.claude/settings.json` の `disabledMcpServers` に該当 MCP 名を追加
   - 例: 当該プロジェクトで Gmail / Calendar を使っていなければ `disabledMcpServers: ["claude_ai_Gmail", "claude_ai_Google_Calendar"]`
-- 切ったときの推定削減（system reminder 文字数）も併記
+- 切ったときの推定削減（deferred_tools_delta の `addedNames` 名前リスト分の chars）も併記
+- **プロジェクト固有の用途**を考慮し、リポジトリ単位 (`<repo>/.claude/settings.json`) で無効化する方が安全（global で切ると他プロジェクトに影響）
 
 #### E. 断点（/clear・/compact）
 
@@ -191,41 +267,65 @@ allowed-tools: Bash, Read, Write, Glob, Grep
 
 #### レポート構造（ファイル本文）
 
+レポートは「**調査経緯を知らない人が単独で読んで判断できる**」必要がある。以下を必ず満たす:
+
+- TL;DR の冒頭に **用語凡例** を 1 行で配置 (`cc / cr / miss%` の意味)
+- 各 Axis (A/B/C/D/E) の初出時に **1 行の注釈** を併記（軸名の意味）
+- 各セッションに **トピック識別** (slash command 起動時はその名前 + args) を併記。`<sid>` だけだと識別不能
+- 推奨アクション TOP3 は **why / how の各 1 行**
+
 ````markdown
 # Token Hotspot 検出レポート
 
-対象: <セッション一覧 / 期間>
+対象プロジェクト: `<repo>` (cwd: `<cwd>`)
 分析範囲: 最新 N セッション (<earliest> 〜 <latest>)
+（実行中の `<sid>...` を除外）
+
+| sid | mtime | turns | 主トピック |
+| --- | --- | ---: | --- |
+| `<sid>` | MM/DD HH:MM | <N> | `/<slash-cmd>「<args>」` または最初のユーザー指示 |
+| ... |
 
 ## TL;DR
 
+用語: cc = `cache_creation_input_tokens` (cache 新規書き込み量) / cr = `cache_read_input_tokens` (cache hit 量) / miss% = cc / (cc + cr)
+
 - 全体トークン: input <I> / output <O> / cache_creation <C> / cache_read <R>
-- 検出 hot spot: 軸 A <a> 件 / 軸 B <b> 件 / 軸 C <c> 件
-- 主因: <ツール出力肥大 / cache miss / MCP 定義過多 など上位 2 つ>
+- overall miss%: <X>% （健全 < 5% / 注意 5-10% / 過大 > 10%）
+- 検出 hot spot: A.1 単発スパイク <a1> 件 / A.2 plateau <a2> 件 / B 巨大 tool_result <b> 件 / C 大 output <c> 件 / E 連続区間 <e> 件
+- 主因（上位 2 つ）: <ツール出力肥大 / plateau billing / MCP 定義過多 等>
 - → 推奨アクション TOP3 は末尾
 
 ---
 
 ## セッション別 hot spot
 
-### `<session-id>` (<turns> turns, total <T> tokens)
+軸の凡例（初出時に併記）:
+- A.1 = 単発 cache_creation スパイク / A.2 = N 連続 cc plateau (parallel batch / ToolSearch 由来)
+- B = tool_result サイズ過多 (Read/Bash 出力肥大) / C = output_tokens 過多 (assistant text 生成大)
+- E = 連続消費区間 (5 ターン以上 cc 高位、サブエージェント委譲候補)
+
+### `<session-id>` (<turns> turns, MM/DD HH:MM, `/<slash-cmd>「<args>」`)
+
+cc=<C> / cr=<R> / out=<O> / miss% = <X>
 
 #### TOP 5 ターン
 
-| ターン | usage (in/out/c-create/c-read) | ツール | 引数要約 | 主因軸 |
+| ターン | usage (in/out/cc/cr) | ツール | 引数要約 | 主因軸 |
 | ---: | --- | --- | --- | --- |
-| 42 | 1.2K / 0.8K / 38K / 5K | Read | `/big/file.log` 全文 | B (tool_result 肥大) |
-| 51 | 0.9K / 0.5K / 22K / 12K | Bash | `git log` 全件 | B + A (cache miss) |
-| 67 | 8K / 14K / 3K / 200K | (assistant text) | (大きな実装出力) | C (output 過多) |
-| ... | | | | |
+| 42 | 1.2K / 0.8K / **38K** / 5K | Read | `/big/file.log` 全文 (28KB) | B |
+| 51 | 0.9K / 0.5K / 22K / 12K | Bash | `git log` 全件 | B |
+| 67 | 8K / **14K** / 3K / 200K | (assistant text) | SKILL.md 生成 | C |
+| 43-44 | 各 1.2K / 0.3K / **76K×2** / 15K | TaskCreate | ToolSearch 直後の plateau | A.2 (N=2, 累計 152K) |
 
-#### cache miss 比率タイムライン
+#### cache miss 比率タイムライン（10 ビン）
 
 ```
-turn:  10  20  30  40  50  60  70  80
-miss:  ##  #_  __  #_  ##  ###  ####  ####
+turn:  10  20  30  40  50  60  70  80  90  100
+miss:  #   #_  __  #_  ##  ##  ###  ###  ##  __
 ```
-→ ターン 60 以降で miss 比率が上昇。断点 or 重い調査の流入。
+凡例: `#` = miss% > 5%, `.` = miss% ≤ 5%
+→ ターン 60 以降で miss 比率が上昇。断点 or 重い調査の流入の可能性。
 
 (セッション数だけ繰り返し。最大 5 セッション。それ以上は「その他のセッション」に圧縮)
 
@@ -246,19 +346,33 @@ miss:  ##  #_  __  #_  ##  ###  ####  ####
 | `git log` | 8 | 320K | `--oneline -30` を既定に |
 | `find .` | 5 | 180K | `Glob` ツール置換 |
 
-### MCP / システム定義オーバーヘッド
+### MCP / システム定義オーバーヘッド（5.3、`attachment.deferred_tools_delta` 由来）
 
-- system reminder 平均文字数: <X> chars/turn
-- うち MCP 定義: <Y> chars (<MCP 名> が <z>%)
-- 不要そうな MCP: <候補>（プロジェクトで未使用の場合）
+| MCP / source | tool 数 | 露出セッション数 | 全期間呼び出し回数 |
+| --- | ---: | ---: | ---: |
+| `<mcp-server>` | <N> | <S>/全 | **0** （未使用） |
+| ... |
 
-### サブエージェント未活用な重い調査
+- 1 セッション当たりの `addedNames` 名前リスト総 chars: <X> 程度
+- 全セッション 0 呼び出しかつ deferred tool 数の 30%+ を占める MCP: <候補>（D で切り離し提案対象）
+- 注意: schema は遅延ロード方式のため schema 量は context に乗らない。実コストは name list ~5KB/session に限定
 
-- セッション `<id>` ターン N〜M: 連続 K ターンで cache_creation 高位、Agent 呼び出し 0 回 → Explore 委譲推奨
+### サブエージェント未活用な重い調査（5.4）
 
-### 中断起因の cache miss
+| セッション | ターン区間 | 連続 K | cc 累積 | 主ツール | 性質 | Agent 推奨? |
+| --- | --- | ---: | ---: | --- | --- | --- |
+| `<id>` | t<N>-t<M> | K | <CC> | Read+Bash | 調査 | ○ Explore 委譲推奨 |
+| `<id>` | t<N>-t<M> | K | <CC> | TaskCreate ×K | task setup | × (除外: A.2 で言及) |
 
-- セッション `<id>` ターン N: 直前との timestamp 差 <X> 分、cache_read が <Y>% 減 → 断点運用推奨
+A.2 plateau や TaskCreate 連発の区間は **委譲対象外** として明示する。
+
+### 中断起因の cache miss（5.5）
+
+| セッション | ターン | gap | 直後 miss% | 1h cache 増分 | 評価 |
+| --- | ---: | ---: | ---: | ---: | --- |
+| `<id>` | <N> | <X> min | <Y>% | <Z> | cache 維持 / TTL 切れ疑い |
+
+5+ min ギャップでも cache 維持される事例が多いため、**情報提供レベル** に留め、TOP3 推奨にはあげないこと。
 
 ---
 
@@ -291,7 +405,7 @@ miss:  ##  #_  __  #_  ##  ###  ####  ####
   ]
 }
 ```
-根拠: <MCP 名> は本プロジェクトのいずれのターンでも未呼び出し。system reminder の <X>% を占めている
+根拠: <MCP 名> は本プロジェクトのいずれのターンでも未呼び出し。deferred tool 名前リスト (`attachment.deferred_tools_delta.addedNames`) のうち <X>% を占めている
 
 ### E. 断点（/clear・/compact）
 
@@ -311,10 +425,13 @@ miss:  ##  #_  __  #_  ##  ###  ####  ####
 
 ## 誤検出の可能性
 
-- 大きな実装出力（軸 C）はユーザー意図のコード生成なら正常
-- 巨大 tool_result（軸 B）でも一回だけならコスト許容範囲のことが多い
-- cache miss 比率上昇は実装フェーズの自然な変化のこともある（巨大ファイル新規作成等）
-- MCP 定義文字数は「全く使わない MCP」のときだけ削減対象（少しでも使うなら残す）
+- **A.1 単発スパイク**: セッション起動の最初 1-3 ターンは system prompt + skill description + attachment の cache 確立で必ず高 cc になる。介入対象外
+- **A.2 plateau**: parallel tool_use batch (TaskCreate ×N、parallel Bash) は不可避コスト。直接削減はできないが、**ToolSearch 由来の plateau** だけは「序盤にまとめてロード」で部分削減可能
+- **大きな実装出力（軸 C）**: `Write(...SKILL.md)` 等のコード生成は本質的に短縮不可。ユーザー意図のものは「無駄」ではない
+- **巨大 tool_result（軸 B）**: 一回だけならコスト許容範囲のことが多い
+- **cache miss 比率上昇**: 実装フェーズの自然な変化のこともある（巨大ファイル新規作成等）
+- **MCP 定義**: schema は遅延ロードなので「全く使わない MCP」のときだけ削減対象（少しでも使うなら残す）。実削減量は名前リスト ~5KB/session に限定
+- **5+ min ギャップ**: 1h ephemeral cache が効くため誤検出多。TOP3 推奨に上げない
 
 ## 推奨アクション TOP3
 
@@ -327,11 +444,13 @@ miss:  ##  #_  __  #_  ##  ###  ####  ####
 
 | Tier | 内容 |
 | --- | --- |
-| Tier 1（必ず TOP3） | 単一ターンで cache_creation > 50K / 全 MCP のうち未使用 MCP が定義オーバーヘッドの 30% 超 / 反復 Read の累積 500K 超 |
-| Tier 2（影響大なら TOP3） | 連続消費区間 5 ターン以上で Agent 未呼び出し / 5 分以上の中断後の miss 比率急増 / 単発の巨大 tool_result 100K 超 |
-| Tier 3（運用改善） | 軽微な反復コマンド / 単発の output 過多 / 軽微な MCP 過多 |
+| Tier 1（必ず TOP3） | 反復 Read の累積 500K 超（A-i / A-ii）/ Agent 呼び出し率 < 1% で 5 ターン以上の調査区間あり（B 委譲）/ 全セッション 0 呼び出しかつ deferred tools の 30% 占める MCP（D） |
+| Tier 2（影響大なら TOP3） | A.2 plateau の累積 cc が累計の 30% 超かつ ToolSearch 起因（→ C: ToolSearch まとめロード）/ 単発の巨大 tool_result 100K 超（A-i または A-iv）/ 5 セッション以上で同小ファイル全文 Read（A-ii） |
+| Tier 3（運用改善） | 軽微な反復コマンド / 単発の output 過多 / 軽微な MCP 過多 / 5 分ギャップ後の軽微 miss |
 
-判断基準: **書き換え 1 つで継続的に効果が出るもの** を上に。MCP 切り離し（D）や反復ファイルの offset/limit 化（A）はセッション横断で効くので Tier 1 に上がりやすい。
+判断基準: **書き換え 1 つで継続的に効果が出るもの** を上に。MCP 切り離し（D）や反復ファイルの offset/limit 化（A-i）/ CLAUDE.md inlining（A-ii）はセッション横断で効くので Tier 1 に上がりやすい。
+
+A.1 単発スパイクや A.2 plateau は「不可避コスト」が多く、TOP3 に上げる前に「ユーザーが実際に減らせるか」を判定する。
 
 #### finding が少ないとき
 
@@ -339,102 +458,17 @@ miss:  ##  #_  __  #_  ##  ###  ####  ####
 
 ### 8. 実装ヒント
 
-`Bash` で `python3` ヒアドキュメントを使うと一気に集計できる。骨格例:
+`Bash` で `python3` ヒアドキュメントを使うと一気に集計できる。骨格コード（v2.1.x JSONL 対応版、A.2 plateau / Axis E TaskCreate 除外 / `attachment.deferred_tools_delta` 抽出含む）は **`reference/implementation.md`** に切り出した。必要に応じて参照すること。
 
-```python
-import json, glob, os, re
-from collections import Counter, defaultdict
+軽量代替: 集計が複雑になりすぎたら **1〜2 セッションだけ手で読み込み**、定性的に finding を作っても十分価値がある（このスキルのゴールは「ユーザーが次の書き換えを選べる」こと）。
 
-SESSIONS = sorted(
-    glob.glob(os.path.expanduser("~/.claude/projects/<encoded-cwd>/*.jsonl")),
-    key=os.path.getmtime, reverse=True
-)[1:11]  # 実行中除外して 10 件
+具体的には:
 
-def tool_result_len(content):
-    if isinstance(content, str):
-        return len(content)
-    if isinstance(content, list):
-        return sum(len(p.get("text", "")) for p in content if isinstance(p, dict))
-    return 0
-
-def per_turn(path):
-    """ターンごとに usage と紐づく tool_result サイズを返す。"""
-    pending = {}  # tool_use_id -> (turn_idx, name, input_summary)
-    turns = []   # [{turn, usage, tools: [(name, args, result_len)], ts}]
-    turn_idx = 0
-    for line in open(path):
-        try:
-            rec = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        t = rec.get("type")
-        if t == "assistant":
-            turn_idx += 1
-            usage = rec.get("message", {}).get("usage", {})
-            entry = {
-                "turn": turn_idx,
-                "usage": {k: usage.get(k, 0) for k in (
-                    "input_tokens", "output_tokens",
-                    "cache_creation_input_tokens", "cache_read_input_tokens",
-                )},
-                "tools": [],
-                "ts": rec.get("timestamp"),
-            }
-            turns.append(entry)
-            for block in rec.get("message", {}).get("content", []):
-                if block.get("type") == "tool_use":
-                    pending[block.get("id")] = (turn_idx, block.get("name"), block.get("input", {}))
-        elif t == "user":
-            content = rec.get("message", {}).get("content")
-            if isinstance(content, list):
-                for block in content:
-                    if isinstance(block, dict) and block.get("type") == "tool_result":
-                        tid = block.get("tool_use_id")
-                        info = pending.pop(tid, None)
-                        if info is None:
-                            continue
-                        ti, name, args = info
-                        size = tool_result_len(block.get("content"))
-                        # 対応する assistant turn にぶら下げる
-                        for tt in turns:
-                            if tt["turn"] == ti:
-                                tt["tools"].append((name, args, size))
-                                break
-    return turns
-
-def cache_miss_ratio(turn):
-    u = turn["usage"]
-    cc = u["cache_creation_input_tokens"]
-    cr = u["cache_read_input_tokens"]
-    return cc / (cc + cr + 1)
-
-def hotspots(turns, k=10):
-    by_cache_creation = sorted(turns, key=lambda t: -t["usage"]["cache_creation_input_tokens"])[:k]
-    by_tool_result   = sorted(turns, key=lambda t: -sum(s for _, _, s in t["tools"]))[:k]
-    by_output        = sorted(turns, key=lambda t: -t["usage"]["output_tokens"])[:k]
-    return by_cache_creation, by_tool_result, by_output
-
-# クロスセッション集約
-file_reads = Counter()
-file_read_chars = Counter()
-bash_prefix = Counter()
-bash_prefix_chars = Counter()
-
-for path in SESSIONS:
-    for turn in per_turn(path):
-        for name, args, size in turn["tools"]:
-            if name == "Read":
-                fp = args.get("file_path", "")
-                file_reads[fp] += 1
-                file_read_chars[fp] += size
-            elif name == "Bash":
-                cmd = (args.get("command") or "").strip()
-                head = " ".join(cmd.split()[:2]) if cmd else ""
-                bash_prefix[head] += 1
-                bash_prefix_chars[head] += size
-```
-
-完全実装は不要 — Claude が transcript を読み取り上記指標を集計できれば良い。集計が複雑になりすぎたら**1〜2 セッションだけ手で読み込み**、定性的に finding を作っても十分価値がある（このスキルのゴールは「ユーザーが次の書き換えを選べる」こと）。
+1. `Glob` で対象ディレクトリの jsonl をリストアップ → mtime 上位 1〜2 件を選ぶ
+2. `Bash("wc -l <session>.jsonl")` でターン規模を見る
+3. `python3 -c 'import json; ...'` のワンライナーで `cc/cr` 累計を出す
+4. 重そうなターン番号だけ `python3` で個別 dump し、tool_use 内容を確認
+5. 質的 finding を組み立てる（特定 SKILL.md を頻繁に読んでいる、TaskCreate を多用、等）
 
 ## 注意事項
 
@@ -443,5 +477,7 @@ for path in SESSIONS:
 - **巨大 JSONL の全文 Read を避ける**。1 ファイル 1MB を超える場合は `python3` ヒアドキュメントで集計する
 - **hot spot は閾値ヒューリスティック**。「これは無駄」と断定せず「削減候補」のトーンで提示し、誤検出条件を必ず併記する
 - **改善提案は具体的に**。「Read を絞ってください」ではなく「`Read(path, offset=0, limit=200)` または `Grep(pattern=..., path=...)` への置換」まで提示する
-- **MCP 切り離し提案は慎重に**。「全く使われていない MCP」のみ対象とし、わずかでも呼び出されている MCP は残す
+- **MCP 切り離し提案は慎重に**。「全セッション 0 呼び出し」のみ対象とし、わずかでも呼び出されている MCP は残す。schema は遅延ロードのため実削減量は ~5KB/session
+- **A.2 plateau の根拠は「N 連続ターンで cc 値が一致」と「直前ターンに ToolSearch / parallel tool_use」の両方を確認**。単に N 連続で cc が高いだけでは A.2 と断定しないこと（誤検出回避）
+- **集計ヒアドキュメントの巨大出力は `> /tmp/foo.json` に書き出して `Read(limit=...)` で部分参照** する（自分自身が A-iv パターンに該当しないように）
 - **レポートはファイルに書き出し**、画面には TL;DR + TOP3 + パスのみ表示する
