@@ -76,8 +76,21 @@ allowed-tools: Read, Write, Edit, MultiEdit, Update, WebSearch, WebFetch
 
 ## 完了時
 
-- タスクの README に、完了条件をチェック
-- タスクの README に、作業ログに結果を記載
-- PR を作成する
-  - `/autodev-create-pr` を使用する
-- ユーザーに完了報告
+完了処理は次の順序で行う。**PR URL を反映するための追加コミット + push を必ず最後に実行すること**（省略するとブランチ上に未 push の変更が残り、レビュー時の差分とローカルが乖離する）。
+
+1. **README に完了条件・作業ログを記載**:
+   - 完了条件のうち、PR 作成項目はこの時点ではまだチェックしない（PR URL が未確定のため）
+   - それ以外の完了条件をチェックし、作業ログに結果を記載
+2. **PR を作成**:
+   - `/autodev-create-pr` を使用する（ここで実装 + README 変更がコミット + push され、PR URL が返る）
+3. **PR URL を README に反映**:
+   - 完了条件の「PR を作成」項目をチェックし、PR URL を併記する
+     - 例: `- [x] PR を作成（\`/autodev-create-pr\`） → https://github.com/<owner>/<repo>/pull/<番号>`
+   - 必要なら作業ログにも PR URL を記載
+4. **追加コミット + push**:
+   - `git add` + `git commit` + `git push` で PR ブランチに反映する
+   - このステップは省略しない
+5. **ブランチがクリーンか確認**:
+   - `git status` で未コミット・未 push の変更がないことを確認
+6. **ユーザーに完了報告**:
+   - PR URL を含めて報告する
