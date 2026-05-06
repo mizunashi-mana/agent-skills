@@ -7,6 +7,8 @@ allowed-tools: Read, Write, Edit, MultiEdit, "Bash(git branch --show-current)", 
 
 PR「$ARGUMENTS」のレビュー結果を確認し、対話的に修正を行います。
 
+**重要**: このスキルは `/autodev-review-pr` 完了時に自動チェーンで起動されることがあるが、その場合も含めて、修正適用前に必ず手順 3 でユーザーの承認を取ること。チェーン経由だからといってユーザー確認を省略してはならない。
+
 ## 手順
 
 ### 1. レビューソースの特定
