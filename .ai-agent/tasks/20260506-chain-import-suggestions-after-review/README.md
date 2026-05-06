@@ -55,7 +55,7 @@
 - [x] 各 frontmatter `allowed-tools` の整合性を確認（`Skill(autodev-import-review-suggestions)` の追加）
 - [x] `scripts/validate-skills.py` を実行して frontmatter 検証を通す
 - [x] `.ai-agent/structure.md` の更新が必要かチェック → 不要
-- [ ] PR を作成（`/autodev-create-pr`）
+- [x] PR を作成（`/autodev-create-pr`） → https://github.com/mizunashi-mana/agent-skills/pull/20
 
 ## 作業ログ
 
@@ -65,3 +65,4 @@
   - import-review-suggestions: 「自動起動経由でも必ずユーザー確認を取る」旨を冒頭注意書きとして追記。
 - 2026-05-06: `scripts/validate-skills.py` 実行 → 全 23 ファイル OK。
 - 2026-05-06: ブランチ `feature/chain-import-suggestions-after-review` でコミット作成。
+- 2026-05-06: `/autodev-create-pr` で PR #20 を作成 → https://github.com/mizunashi-mana/agent-skills/pull/20
