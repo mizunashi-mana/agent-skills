@@ -1,6 +1,6 @@
 ---
 description: Start a new implementation task with branch, README, and structured workflow. Use when beginning a feature, bug fix, or improvement that takes a day to a few days.
-allowed-tools: Read, Write, Edit, MultiEdit, Update, WebSearch, WebFetch, "Bash(git checkout -b *)", "Bash(git status *)", "Bash(git add *)", "Bash(git commit *)", "Bash(git push *)", Skill(autodev-create-pr), Skill(autodev-discussion), Skill(autodev-start-new-survey), Skill(autodev-start-new-project)
+allowed-tools: Read, Write, Edit, MultiEdit, Update, WebSearch, WebFetch, "Bash(git checkout -b *)", "Bash(git status *)", "Bash(git add *)", "Bash(git commit *)", "Bash(git push *)", "Bash(gh pr checks *)", "Bash(gh run view *)", Skill(autodev-create-pr), Skill(autodev-review-pr), Skill(autodev-discussion), Skill(autodev-start-new-survey), Skill(autodev-start-new-project)
 ---
 
 # 新規タスク開始
@@ -48,7 +48,7 @@ allowed-tools: Read, Write, Edit, MultiEdit, Update, WebSearch, WebFetch, "Bash(
 
 - 目的・ゴール
 - 実装方針
-- 完了条件
+- 完了条件（「PR を作成」「レビュー・指摘取り込み」「CI が全て成功」の項目を必ず含める）
 - 作業ログ（空欄で開始）
 
 ### 5. 関連ドキュメント確認
@@ -75,22 +75,36 @@ allowed-tools: Read, Write, Edit, MultiEdit, Update, WebSearch, WebFetch, "Bash(
 
 ## 完了時
 
-完了処理は次の順序で行う。**PR URL を反映するための追加コミット + push を必ず最後に実行すること**（省略するとブランチ上に未 push の変更が残り、レビュー時の差分とローカルが乖離する）。
+タスクのゴールは **「PR を作成し、レビュー指摘を取り込み、CI が全て成功したうえで、ブランチに未コミット・未 push の変更が残っていない状態」** とする。PR 作成で止めず、次の順序でレビュー取り込みと CI 確認まで進める。
 
 1. **README に完了条件・作業ログを記載してコミット**:
-   - 完了条件のうち、PR 作成項目はこの時点ではまだチェックしない（PR URL が未確定のため）
+   - 完了条件のうち、PR 作成・レビュー・CI の項目はこの時点ではまだチェックしない（PR URL・レビュー結果・CI 結果が未確定のため）
    - それ以外の完了条件をチェックし、作業ログに結果を記載
    - 実装変更とまとめて `git add` + `git commit` する（`/autodev-create-pr` は未コミット変更があると先にコミットを促す挙動なので、ここで commit を済ませておく）
 2. **PR を作成**:
    - `/autodev-create-pr` を使用する（push + PR 作成を行い、PR URL を返す）
-3. **PR URL を README に反映**:
+3. **PR URL を README に反映してコミット + push**:
    - 完了条件の「PR を作成」項目をチェックし、PR URL を併記する
      - 例: `- [x] PR を作成（\`/autodev-create-pr\`） → https://github.com/<owner>/<repo>/pull/<番号>`
-   - 必要なら作業ログにも PR URL を記載
-4. **追加コミット + push**:
-   - `git add` + `git commit` + `git push` で PR ブランチに反映する
-   - このステップは省略しない
-5. **ブランチがクリーンか確認**:
+   - `git add` + `git commit` + `git push` で PR ブランチに反映する（レビュー対象の差分とローカルを一致させるため、レビュー前に必ず push する）
+4. **レビューと指摘の取り込み**:
+   - `/autodev-review-pr {PR番号}` を使用する
+   - reviewer サブエージェントによるレビュー → 指摘の分類 → 修正 → コミット + push まで、このスキル内で行われる
+   - 判断が必要な「要確認」の指摘のみユーザーに質問される
+5. **レビュー結果を README に反映してコミット + push**:
+   - 完了条件の「レビュー・指摘取り込み」項目をチェックする
+   - 作業ログにレビュー結果（推奨アクション、修正件数・スキップ件数とスキップ理由の要約）を記載する
+   - `git add` + `git commit` + `git push` で PR ブランチに反映する。**このステップは省略しない**（省略するとブランチ上に未 push の変更が残る）
+6. **CI が全て成功したか確認**:
+   - 最後の push に対する CI の完了を `gh pr checks <PR番号> --watch` で待ち、全チェックが成功していることを確認する
+   - 失敗したチェックがある場合:
+     1. `gh pr checks <PR番号>` で失敗したチェックを特定し、`gh run view <run-id> --log-failed` でログを確認する
+     2. 原因を修正してコミット + push し、再度 CI の完了を待つ（全て成功するまで繰り返す）
+     3. 自力で解決できない失敗（CI 基盤側の障害、権限不足など）はユーザーに報告して判断を仰ぐ
+   - CI が全て成功したら、完了条件の「CI が全て成功」項目をチェックし、作業ログに CI 修正の有無を記載してコミット + push する
+     - この README のみのコミットで CI が再実行される場合も、完了を待って成功を確認する
+   - CI が設定されていないリポジトリ（`gh pr checks` でチェックが 0 件）の場合は、その旨を作業ログに記載してこの手順をスキップする（push 直後はチェックが未登録のことがあるため、0 件のときは少し間を置いて再確認してから判断する）
+7. **ブランチがクリーンか確認**:
    - `git status` で未コミット・未 push の変更がないことを確認
-6. **ユーザーに完了報告**:
-   - PR URL を含めて報告する
+8. **ユーザーに完了報告**:
+   - PR URL、レビューの推奨アクション、取り込んだ指摘・スキップした指摘の要約、CI の結果を含めて報告する

@@ -40,15 +40,13 @@
 
 GitHub の Review 機能を使ってレビューする。
 
-1. `/autodev-review-pr` で reviewer エージェントが GitHub にレビューコメントを投稿
-2. `/autodev-import-review-suggestions` で GitHub 上のレビューコメントを取り込み、対話的に修正
+`/autodev-review-pr` で reviewer サブエージェントが GitHub にレビューコメントを投稿し、続けて指摘を取り込んで修正・push し、各コメントに対応結果を返信する
 
 #### ローカルレビュー
 
 ローカルの diff を使って Claude がレビューし、結果をファイルに保存する。
 
-1. `/autodev-review-pr` で reviewer エージェントがローカルの diff をレビューし、`.ai-agent/tmp/reviews/` に結果を保存
-2. `/autodev-import-review-suggestions` でレビューファイルを読み込み、対話的に修正
+`/autodev-review-pr` で reviewer サブエージェントがローカルの diff をレビューして `.ai-agent/tmp/reviews/` に結果を保存し、続けて指摘を取り込んで修正・コミットし、レビューファイルに対応結果を追記する
 
 ### 注意事項
 
@@ -77,4 +75,7 @@ GitHub の Review 機能を使ってレビューする。
 1. 完了条件を満たしているか確認
 2. 作業ログを更新
 3. PR を作成（`/autodev-create-pr`）
-4. ユーザーに完了報告
+4. レビューと指摘の取り込み（`/autodev-review-pr`）
+5. CI が全て成功したことを確認（失敗時は修正して再 push）
+6. ブランチに未コミット・未 push の変更が残っていないことを確認
+7. ユーザーに完了報告
