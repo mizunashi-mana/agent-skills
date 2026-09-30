@@ -41,7 +41,7 @@
 - [x] `scripts/validate-skills.py` が通る
 - [x] PR を作成（`/autodev-create-pr`） → https://github.com/mizunashi-mana/agent-skills/pull/23
 - [x] `/autodev-review-pr` でレビューし、指摘を取り込む
-- [ ] CI が全て成功
+- [x] CI が全て成功
 
 ## 作業ログ
 
@@ -60,3 +60,4 @@
   - 修正 4 件: 自分の PR で APPROVE にならず早期終了しない問題（指摘件数で判定するよう変更）、`gh pr checks --watch` の Bash タイムアウト対策、旧 import スキルの移行案内、work.md の push 記述漏れ
   - スキップ 2 件: テーブル列幅（表示に影響なし）、`gh api *` 権限の広さ（返信投稿に必要）
   - 追加対応: Agent ツールはバックグラウンド実行されうるため、完了通知を待つ旨を review-pr に追記（実運用で判明）
+- 2026-09-30: CI 全成功（validate skills / CodeQL / Analyze (actions, python) / GitGuardian）。CI 起因の修正なし
