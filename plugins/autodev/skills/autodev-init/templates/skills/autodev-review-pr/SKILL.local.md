@@ -1,6 +1,6 @@
 ---
 description: Review the current branch's changes locally using a reviewer subagent in a clean context and report the findings (review only, no fixes). Use when you want an unbiased code review without the current conversation's context influencing the review.
-allowed-tools: Read, Glob, Grep, AskUserQuestion, Agent, "Bash(git branch --show-current)", "Bash(git status *)", "Bash(gh pr list *)", "Bash(gh pr view *)"
+allowed-tools: Read, Write, Edit, Glob, Grep, AskUserQuestion, Agent, WebSearch, "Bash(git branch --show-current)", "Bash(git status *)", "Bash(git diff *)", "Bash(mkdir *)", "Bash(gh pr list *)", "Bash(gh pr view *)"
 ---
 
 # ローカルレビュー
@@ -19,7 +19,7 @@ allowed-tools: Read, Glob, Grep, AskUserQuestion, Agent, "Bash(git branch --show
 
 ### 2. 未コミットの変更がないか確認
 
-- `git status` で未コミットの変更がないことを確認する
+- `git status --short --untracked-files=no` で、追跡ファイルの未コミット変更がないことを確認する（未追跡ファイルは無視してよい）
 - 残っている場合は、レビュー対象の差分に含まれないため、先にコミットするかユーザーに確認する
 
 ### 3. Reviewer サブエージェントの起動
@@ -45,7 +45,7 @@ reviewer のレビュー結果を報告して終了する。報告には以下�
 - 推奨アクション
 - レビューファイルの保存先パス
 
-指摘の取り込み（修正・コミット・対応結果の追記）は呼び出し元が行う。`/autodev-start-new-task` から呼ばれた場合は、同スキルの「レビュー指摘の取り込み」手順で処理される。
+指摘の取り込み（修正・コミット・対応結果の追記）は呼び出し元が行う。`/autodev-start-new-task` から呼ばれた場合は、同スキルの「レビュー指摘の取り込み」手順で処理される。単体で実行した場合は、報告を受けてユーザーと会話の中で個別に対応する。
 
 ## 注意事項
 
@@ -54,3 +54,4 @@ reviewer のレビュー結果を報告して終了する。報告には以下�
 - 大きな PR でも reviewer が段階的にレビューする
 - レビュー結果は `.ai-agent/tmp/reviews/YYYYMMDD-pr-{PR番号}/REVIEW-{連番}.md` に保存される
 - このスキルはレビュー対象コードの修正・コミットを行わない
+- allowed-tools の `Write` / `Edit` / `Bash(mkdir *)` は reviewer がレビューファイル（`.ai-agent/tmp/reviews/...`）を作成・書き込むため、`Bash(git diff *)` / `WebSearch` は差分取得・技術情報の確認に使うためのもの

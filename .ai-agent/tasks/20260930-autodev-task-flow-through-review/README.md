@@ -2,9 +2,9 @@
 
 ## 目的・ゴール
 
-- `autodev-start-new-task` のゴールを「PR 作成」から「PR 作成 → レビュー → 指摘取り込み」までに拡張し、1 タスクをレビュー済みの状態まで一気通貫で進められるようにする
+- `autodev-start-new-task` のゴールを「PR 作成」から「PR 作成 → レビュー → 指摘取り込み → CI 全成功の確認」までに拡張し、1 タスクをレビュー済みの状態まで一気通貫で進められるようにする
 - `autodev-review-pr` を TeamCreate / SendMessage ベースのチーム運用から、Agent ツール（サブエージェント）ベースに書き換えて簡素化する
-- レビュー指摘の取り込みを `autodev-review-pr` に統合し、`autodev-import-review-suggestions` スキルを削除する
+- `autodev-review-pr` はレビューのみに限定し、レビュー指摘の取り込みを `autodev-start-new-task` の完了フローに移して、`autodev-import-review-suggestions` スキルを削除する
 
 ## 実装方針
 
@@ -24,7 +24,7 @@
 
 ### autodev-start-new-task（完了フロー拡張）
 
-- 完了フローに「PR 作成 → PR URL 反映 push → `/autodev-review-pr` でレビュー + 取り込み → 作業ログ更新 push → CI 全成功の確認（失敗時は修正して再 push）→ クリーン確認 → 報告」を追加
+- 完了フローに「PR 作成 → PR URL 反映 push → `/autodev-review-pr` でレビュー → 「レビュー指摘の取り込み」で修正・push・返信 → 作業ログ更新 push → CI 全成功の確認（失敗時は修正して再 push）→ クリーン確認 → 報告」を追加
 - 「レビュー指摘の取り込み」セクションを新設し、review-pr の結果をもとに以下を行う:
   - 各指摘を 修正推奨 / 不要 / 要確認 に分類し、要確認のみユーザーに確認
   - 修正 → コミット → push
@@ -40,7 +40,7 @@
 - [x] steering ドキュメント・structure.md・autodev-init SKILL.md・templates/work.md が更新されている
 - [x] `scripts/validate-skills.py` が通る
 - [x] PR を作成（`/autodev-create-pr`） → https://github.com/mizunashi-mana/agent-skills/pull/23
-- [x] `/autodev-review-pr` でレビューし、指摘を取り込む
+- [x] レビュー・指摘取り込み（`/autodev-review-pr`）
 - [x] CI が全て成功
 
 ## 作業ログ
@@ -62,3 +62,7 @@
   - 追加対応: Agent ツールはバックグラウンド実行されうるため、完了通知を待つ旨を review-pr に追記（実運用で判明）
 - 2026-09-30: CI 全成功（validate skills / CodeQL / Analyze (actions, python) / GitGuardian）。CI 起因の修正なし
 - 2026-09-30: ユーザー要望により方針変更。review-pr はレビューのみに限定し（修正・コミット・返信は行わない）、指摘の取り込み（分類 → 要確認のみ質問 → 修正・コミット・push → 返信 / 対応結果追記）を start-new-task の「レビュー指摘の取り込み」セクションに移設。review-pr の allowed-tools から Write / Edit / git add・commit・push / gh api を削除し、start-new-task に AskUserQuestion / `gh api` を追加
+- 2026-09-30: ユーザー指摘により、review-pr の allowed-tools に reviewer が使う権限を復元（ローカル版: Write / Edit / `mkdir` / `git diff` / WebSearch、GitHub 版: `gh pr diff` / `gh api` / WebSearch）
+- 2026-09-30: 2 回目のレビュー（新しい責務分担で実施）→ 推奨アクション COMMENT（Critical 0 / Warning 2 / Info 4）
+  - 修正: README の目的・方針が旧方針のまま（W2）、WebSearch の削除（Info1、上記の権限復元で対応）、`git status` 確認で未追跡ファイルまで止まる問題（Info2、`--untracked-files=no` と未 push 判定に限定）、完了条件の文言をテンプレートに統一（Info3）
+  - 要確認（ユーザー判断）: start-new-task の外で取り込む手段がない件（W1）→ 運用として明記する方針。work.md と review-pr に「人間レビュアーのコメント・単体実行・セッション再開時は会話の中で個別に対応する」と追記
