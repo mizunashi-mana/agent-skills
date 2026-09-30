@@ -39,7 +39,7 @@
 - [x] autodev-start-new-task（本リポジトリ用 + テンプレート）の完了フローがレビュー取り込みと CI 全成功の確認までを含む
 - [x] steering ドキュメント・structure.md・autodev-init SKILL.md・templates/work.md が更新されている
 - [x] `scripts/validate-skills.py` が通る
-- [ ] PR を作成（`/autodev-create-pr`）
+- [x] PR を作成（`/autodev-create-pr`） → https://github.com/mizunashi-mana/agent-skills/pull/23
 - [ ] `/autodev-review-pr` でレビューし、指摘を取り込む
 - [ ] CI が全て成功
 
@@ -55,3 +55,4 @@
   - start-new-task の完了フローに review-pr 呼び出しと CI 全成功確認を追加
   - `scripts/validate-skills.py`: 22 ファイル、エラー 0
   - 未追跡の `.ai-agent/projects/20260506-autodev-workspace-support/` にも import-review-suggestions への言及があるが、本タスクの管理外のため未変更
+- 2026-09-30: PR 作成 → https://github.com/mizunashi-mana/agent-skills/pull/23
