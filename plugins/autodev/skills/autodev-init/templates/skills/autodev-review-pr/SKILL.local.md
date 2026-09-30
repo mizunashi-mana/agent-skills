@@ -1,11 +1,11 @@
 ---
-description: Review the current branch's changes locally using a dedicated reviewer agent in a clean context. Use when you want an unbiased code review without the current conversation's context influencing the review.
-allowed-tools: Read, Write, "Bash(git branch --show-current)", "Bash(gh pr list *)", Glob, Grep, AskUserQuestion, TeamCreate, TeamDelete, Task, TaskCreate, TaskUpdate, TaskList, TaskGet, SendMessage, WebSearch, Skill(autodev-import-review-suggestions)
+description: Review the current branch's changes locally using a reviewer subagent in a clean context and report the findings (review only, no fixes). Use when you want an unbiased code review without the current conversation's context influencing the review.
+allowed-tools: Read, Write, Edit, Glob, Grep, AskUserQuestion, Agent, WebSearch, "Bash(git branch --show-current)", "Bash(git status *)", "Bash(git diff *)", "Bash(mkdir *)", "Bash(gh pr list *)", "Bash(gh pr view *)"
 ---
 
 # ローカルレビュー
 
-現在のブランチの変更を、クリーンなコンテキストの reviewer エージェントでローカルレビューします。
+現在のブランチの変更を、クリーンなコンテキストの reviewer サブエージェントでローカルレビューし、結果を報告します。このスキルはレビューのみを行い、指摘に基づく修正は行いません。
 
 ## 手順
 
@@ -17,68 +17,35 @@ allowed-tools: Read, Write, "Bash(git branch --show-current)", "Bash(gh pr list 
   2. `gh pr list --head <branch-name> --json number --limit 1` で該当ブランチの PR 番号を検索
   3. PR が見つからない場合はユーザーに PR 番号の指定を求める
 
-### 2. チーム作成
+### 2. 未コミットの変更がないか確認
+
+- `git status --short --untracked-files=no` で、追跡ファイルの未コミット変更がないことを確認する（未追跡ファイルは無視してよい）
+- 残っている場合は、レビュー対象の差分に含まれないため、先にコミットするかユーザーに確認する
+
+### 3. Reviewer サブエージェントの起動
+
+`.claude/skills/autodev-review-pr/reviewer-spawn-prompt.md` を読み込み、`{PR_NUMBER}` をレビュー対象の PR 番号に置換して prompt として使用する。
 
 ```
-TeamCreate({ team_name: "review-pr-{PR番号}", description: "PR #{PR番号} のローカルレビュー" })
-```
-
-### 3. タスク作成
-
-```
-TaskCreate({
-  subject: "PR #{PR番号} をローカルレビュー",
-  description: "PR #{PR番号} のコードレビューを実施し、レビュー結果をファイルに保存する",
-  activeForm: "PR #{PR番号} をレビュー中"
-})
-```
-
-### 4. Reviewer エージェントの起動
-
-`.claude/skills/autodev-review-pr/reviewer-spawn-prompt.md` を読み込み、spawn prompt として使用する。
-
-spawn prompt 中の `{PR_NUMBER}` をレビュー対象の PR 番号に置換してから使用する。
-
-```
-Task({
+Agent({
   description: "Review PR #{PR番号}",
   prompt: "{reviewer-spawn-prompt.md の内容（{PR_NUMBER} を置換済み）}",
   subagent_type: "general-purpose",
-  model: "opus",
-  team_name: "review-pr-{PR番号}",
-  name: "reviewer"
+  model: "opus"
 })
 ```
 
-### 5. レビュー完了の確認
+reviewer はレビュー結果を `.ai-agent/tmp/reviews/YYYYMMDD-pr-{PR番号}/REVIEW-{連番}.md` に保存し、最終応答としてレビュー結果（指摘一覧・推奨アクション・保存先パス）を返す。Agent ツールの返り値（バックグラウンド実行された場合は完了通知で届く最終報告）がそのままレビュー結果になるため、メッセージのやり取りやシャットダウン処理は不要。バックグラウンド実行の場合は、完了通知が届くまで結果を推測せずに待つ。
 
-reviewer からのメッセージを待ち、レビュー結果を確認する。
+### 4. 結果報告
 
-### 6. チームの解散とシャットダウン
+reviewer のレビュー結果を報告して終了する。報告には以下を含める:
 
-1. reviewer に `shutdown_request` を送信
-2. reviewer のシャットダウンを待つ
-3. `TeamDelete` でチームをクリーンアップ
+- Critical / Warning / Info の各指摘（ファイル名・行番号・問題・修正案）
+- 推奨アクション
+- レビューファイルの保存先パス
 
-**推奨アクションが APPROVE の場合**: reviewer のシャットダウンとチーム解散まで自動で行い、結果報告に進む。ユーザーの確認は不要。
-
-**推奨アクションが REQUEST_CHANGES または COMMENT の場合**: reviewer をシャットダウンし、結果報告に進む。報告後、続けて手順 8 で `/autodev-import-review-suggestions` を起動する。
-
-### 7. 結果報告
-
-reviewer のレビュー結果サマリーをユーザーに報告する。レビューファイルの保存先パスも伝える。
-
-### 8. 指摘事項の取り込み（findings がある場合のみ）
-
-推奨アクションが REQUEST_CHANGES または COMMENT の場合、続けて `Skill(autodev-import-review-suggestions)` を起動して指摘事項の取り込みフローへ移る。引数として PR 番号を渡す（PR 番号が無い場合は引数なしで起動し、import 側でブランチから解決させる）。
-
-```
-Skill({ skill: "autodev-import-review-suggestions", args: "{PR番号}" })
-```
-
-`autodev-import-review-suggestions` の `.local.md` 版はローカルレビューファイル（`.ai-agent/tmp/reviews/...`）と GitHub PR コメントの両方を扱える。
-
-推奨アクションが APPROVE の場合は、この手順をスキップしてタスク完了。
+指摘の取り込み（修正・コミット・対応結果の追記）は呼び出し元が行う。`/autodev-start-new-task` から呼ばれた場合は、同スキルの「レビュー指摘の取り込み」手順で処理される。単体で実行した場合は、報告を受けてユーザーと会話の中で個別に対応する。
 
 ## 注意事項
 
@@ -86,3 +53,5 @@ Skill({ skill: "autodev-import-review-suggestions", args: "{PR番号}" })
 - reviewer は steering docs（tech.md, structure.md 等）を自分で読み込んでレビューする
 - 大きな PR でも reviewer が段階的にレビューする
 - レビュー結果は `.ai-agent/tmp/reviews/YYYYMMDD-pr-{PR番号}/REVIEW-{連番}.md` に保存される
+- このスキルはレビュー対象コードの修正・コミットを行わない
+- allowed-tools の `Write` / `Edit` / `Bash(mkdir *)` は reviewer がレビューファイル（`.ai-agent/tmp/reviews/...`）を作成・書き込むため、`Bash(git diff *)` / `WebSearch` は差分取得・技術情報の確認に使うためのもの

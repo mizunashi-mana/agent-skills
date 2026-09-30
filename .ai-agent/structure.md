@@ -26,9 +26,8 @@ agent-skills/
 │       ├── autodev-create-issue/                               # GitHub Issue 作成
 │       ├── autodev-create-pr/                                  # PR 作成
 │       ├── autodev-discussion/                                 # 対話的アイデア整理
-│       ├── autodev-import-review-suggestions/                  # レビュー指摘取り込み
 │       ├── autodev-replan/                                     # ロードマップ再策定
-│       ├── autodev-review-pr/                                  # PR レビュー（マルチエージェント）
+│       ├── autodev-review-pr/                                  # PR レビュー（サブエージェント、レビューのみ）
 │       │   ├── skill.md
 │       │   └── reviewer-spawn-prompt.md
 │       ├── autodev-start-new-project/                          # 長期プロジェクト開始
@@ -52,11 +51,10 @@ agent-skills/
 │   │           └── templates/                                  # 展開対象のテンプレート
 │   │               ├── claude-md.md                            # CLAUDE.md ベース
 │   │               ├── work.md                                 # 開発ワークフロー（GitHub Flow）
-│   │               └── skills/                                 # autodev サブスキル 11 種
+│   │               └── skills/                                 # autodev サブスキル 10 種
 │   │                   ├── autodev-create-issue/
 │   │                   ├── autodev-create-pr/
 │   │                   ├── autodev-discussion/
-│   │                   ├── autodev-import-review-suggestions/  # GitHub 版 + .local.md
 │   │                   ├── autodev-replan/
 │   │                   ├── autodev-review-pr/                  # GitHub 版 + .local.md + reviewer-spawn-prompt
 │   │                   ├── autodev-start-new-project/

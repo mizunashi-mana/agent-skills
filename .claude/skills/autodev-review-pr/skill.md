@@ -1,11 +1,11 @@
 ---
-description: Review a GitHub pull request using a dedicated reviewer agent in a clean context. Use when you want an unbiased code review without the current conversation's context influencing the review.
-allowed-tools: Read, "Bash(git branch --show-current)", "Bash(gh pr list *)", Glob, Grep, AskUserQuestion, TeamCreate, TeamDelete, Task, TaskCreate, TaskUpdate, TaskList, TaskGet, SendMessage, WebSearch, Skill(autodev-import-review-suggestions)
+description: Review a GitHub pull request using a reviewer subagent in a clean context and report the findings (review only, no fixes). Use when you want an unbiased code review without the current conversation's context influencing the review.
+allowed-tools: Read, Glob, Grep, AskUserQuestion, Agent, WebSearch, "Bash(git branch --show-current)", "Bash(git status *)", "Bash(gh pr list *)", "Bash(gh pr view *)", "Bash(gh pr diff *)", "Bash(gh api *)"
 ---
 
 # PR レビュー
 
-PR「$ARGUMENTS」を、クリーンなコンテキストの reviewer エージェントでレビューします。
+PR「$ARGUMENTS」を、クリーンなコンテキストの reviewer サブエージェントでレビューし、結果を報告します。このスキルはレビューのみを行い、指摘に基づく修正は行いません。
 
 ## 手順
 
@@ -18,69 +18,41 @@ PR「$ARGUMENTS」を、クリーンなコンテキストの reviewer エージ�
   3. PR が見つかった場合はその PR をレビュー対象とする
   4. PR が見つからない場合はユーザーに PR 番号の指定を求める
 
-### 2. チーム作成
+### 2. 未 push の変更がないか確認
+
+- `git status --short --branch --untracked-files=no` で、追跡ファイルの未コミット変更と未 push のコミット（`[ahead N]`）がないことを確認する
+  - 未追跡ファイルはレビュー対象の差分に影響しないため無視してよい
+- 残っている場合は、レビュー対象の差分とローカルが乖離するため、先にコミット + push するかユーザーに確認する
+
+### 3. Reviewer サブエージェントの起動
+
+`.claude/skills/autodev-review-pr/reviewer-spawn-prompt.md` を読み込み、`{PR_NUMBER}` をレビュー対象の PR 番号に置換して prompt として使用する。
 
 ```
-TeamCreate({ team_name: "review-pr-{PR番号}", description: "PR #{PR番号} のレビュー" })
-```
-
-### 3. タスク作成
-
-```
-TaskCreate({
-  subject: "PR #{PR番号} をレビュー",
-  description: "PR #{PR番号} のコードレビューを実施し、GitHub の Review 機能でコメントを投稿する",
-  activeForm: "PR #{PR番号} をレビュー中"
-})
-```
-
-### 4. Reviewer エージェントの起動
-
-`.claude/skills/autodev-review-pr/reviewer-spawn-prompt.md` を読み込み、spawn prompt として使用する。
-
-spawn prompt 中の `{PR_NUMBER}` をレビュー対象の PR 番号に置換してから使用する。
-
-```
-Task({
+Agent({
   description: "Review PR #{PR番号}",
   prompt: "{reviewer-spawn-prompt.md の内容（{PR_NUMBER} を置換済み）}",
   subagent_type: "general-purpose",
-  model: "opus",
-  team_name: "review-pr-{PR番号}",
-  name: "reviewer"
+  model: "opus"
 })
 ```
 
-### 5. レビュー完了の確認
+reviewer は GitHub にレビューを投稿し、最終応答としてレビュー結果（指摘一覧・推奨アクション・投稿したレビューの ID）を返す。Agent ツールの返り値（バックグラウンド実行された場合は完了通知で届く最終報告）がそのままレビュー結果になるため、メッセージのやり取りやシャットダウン処理は不要。バックグラウンド実行の場合は、完了通知が届くまで結果を推測せずに待つ。
 
-reviewer からのメッセージを待ち、レビュー結果を確認する。
+### 4. 結果報告
 
-### 6. チームの解散とシャットダウン
+reviewer のレビュー結果を報告して終了する。報告には以下を含める:
 
-1. reviewer に `shutdown_request` を送信
-2. reviewer のシャットダウンを待つ
-3. `TeamDelete` でチームをクリーンアップ
+- Critical / Warning / Info の各指摘（ファイル名・行番号・問題・修正案）
+- 推奨アクション（自分の PR の場合、指摘が無くても COMMENT にフォールバックしている点に注意）
+- 投稿したレビューの ID と URL
 
-**推奨アクションが APPROVE の場合**: reviewer のシャットダウンとチーム解散まで自動で行い、結果報告に進む。ユーザーの確認は不要。
-
-**推奨アクションが REQUEST_CHANGES または COMMENT の場合**: reviewer をシャットダウンし、結果報告に進む。報告後、続けて手順 8 で `/autodev-import-review-suggestions` を起動する。
-
-### 7. 結果報告
-
-reviewer のレビュー結果サマリーをユーザーに報告する。
-
-### 8. 指摘事項の取り込み（findings がある場合のみ）
-
-推奨アクションが REQUEST_CHANGES または COMMENT の場合、続けて `Skill(autodev-import-review-suggestions)` を起動して指摘事項の取り込みフローへ移る。引数として PR 番号を渡す。
-
-```
-Skill({ skill: "autodev-import-review-suggestions", args: "{PR番号}" })
-```
-
-推奨アクションが APPROVE の場合は、この手順をスキップしてタスク完了。
+指摘の取り込み（修正・コミット・コメントへの返信）は呼び出し元が行う。`/autodev-start-new-task` から呼ばれた場合は、同スキルの「レビュー指摘の取り込み」手順で処理される。単体で実行した場合は、報告を受けてユーザーと会話の中で個別に対応する。
 
 ## 注意事項
 
 - reviewer は clean context で動作するため、現在の会話の文脈に影響されない公正なレビューが可能
 - reviewer は steering docs（tech.md, structure.md 等）を自分で読み込んでレビューする
 - 大きな PR でも reviewer が段階的にレビューする
+- このスキルはファイルの修正・コミット・push を行わない
+- allowed-tools の `Bash(gh pr diff *)` / `Bash(gh api *)` / `WebSearch` は reviewer が差分取得・レビュー投稿・技術情報の確認に使うためのもの

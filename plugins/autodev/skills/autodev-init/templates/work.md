@@ -40,15 +40,17 @@
 
 GitHub の Review 機能を使ってレビューする。
 
-1. `/autodev-review-pr` で reviewer エージェントが GitHub にレビューコメントを投稿
-2. `/autodev-import-review-suggestions` で GitHub 上のレビューコメントを取り込み、対話的に修正
+1. `/autodev-review-pr` で reviewer サブエージェントが GitHub にレビューコメントを投稿する（レビューのみ）
+2. `/autodev-start-new-task` の完了フロー内で指摘を取り込んで修正・push し、各コメントに対応結果を返信する
 
 #### ローカルレビュー
 
 ローカルの diff を使って Claude がレビューし、結果をファイルに保存する。
 
-1. `/autodev-review-pr` で reviewer エージェントがローカルの diff をレビューし、`.ai-agent/tmp/reviews/` に結果を保存
-2. `/autodev-import-review-suggestions` でレビューファイルを読み込み、対話的に修正
+1. `/autodev-review-pr` で reviewer サブエージェントがローカルの diff をレビューし、`.ai-agent/tmp/reviews/` に結果を保存する（レビューのみ）
+2. `/autodev-start-new-task` の完了フロー内で指摘を取り込んで修正・コミット・push し、レビューファイルに対応結果を追記する
+
+人間のレビュアーが後から付けたコメント、`/autodev-review-pr` を単体で実行したときの指摘、セッションをまたいで取り込みを再開する場合は、専用のスキルを使わず、会話の中で個別に対応する（修正・push・コメントへの返信を依頼する）。
 
 ### 注意事項
 
@@ -77,4 +79,7 @@ GitHub の Review 機能を使ってレビューする。
 1. 完了条件を満たしているか確認
 2. 作業ログを更新
 3. PR を作成（`/autodev-create-pr`）
-4. ユーザーに完了報告
+4. レビュー（`/autodev-review-pr`）と指摘の取り込み
+5. CI が全て成功したことを確認（失敗時は修正して再 push）
+6. ブランチに未コミット・未 push の変更が残っていないことを確認
+7. ユーザーに完了報告

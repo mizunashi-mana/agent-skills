@@ -108,10 +108,10 @@ disable-model-invocation: true
 
 スキルインストールの前に、レビュー形式をユーザーに確認する:
 
-- **GitHub レビュー**: GitHub の Review 機能（コメント・Approve・Request Changes）を使ってレビューする。レビューコメントの取り込みも GitHub 上で行う
+- **GitHub レビュー**: GitHub の Review 機能（コメント・Approve・Request Changes）を使ってレビューする。指摘の取り込み（`autodev-start-new-task` の完了フロー内で実施）後、GitHub 上のレビューコメントに対応結果を返信する
 - **ローカルレビュー**: ローカルの diff を使って Claude がレビューし、結果をファイル（`.ai-agent/tmp/reviews/`）に保存する。GitHub のレビュー機能は使わない
 
-選択に応じて、`autodev-review-pr` と `autodev-import-review-suggestions` のテンプレートを切り替える（下記テーブル参照）。
+選択に応じて、`autodev-review-pr` のテンプレートを切り替える（下記テーブル参照）。
 
 **ローカルレビューが選択された場合**: `.ai-agent/tmp/` を `.gitignore` に追加する（既に記載されていなければ）。
 
@@ -134,9 +134,8 @@ disable-model-invocation: true
 | `autodev-create-issue`              | [SKILL.md](templates/skills/autodev-create-issue/SKILL.md)                                                                                                                                                                                                                                                                                      | GitHub Issue の作成             |
 | `autodev-create-pr`                 | [SKILL.md](templates/skills/autodev-create-pr/SKILL.md)                                                                                                                                                                                                                                                                                         | プルリクエストの作成            |
 | `autodev-discussion`                | [SKILL.md](templates/skills/autodev-discussion/SKILL.md)                                                                                                                                                                                                                                                                                        | アイデアや考えの対話的な整理    |
-| `autodev-import-review-suggestions` | GitHub: [SKILL.md](templates/skills/autodev-import-review-suggestions/SKILL.md) / ローカル: [SKILL.local.md](templates/skills/autodev-import-review-suggestions/SKILL.local.md)                                                                                                                                                                 | レビュー指摘の取り込み          |
 | `autodev-replan`                    | [SKILL.md](templates/skills/autodev-replan/SKILL.md)                                                                                                                                                                                                                                                                                            | ロードマップの再策定            |
-| `autodev-review-pr`                 | GitHub: [SKILL.md](templates/skills/autodev-review-pr/SKILL.md) + [reviewer-spawn-prompt.md](templates/skills/autodev-review-pr/reviewer-spawn-prompt.md) / ローカル: [SKILL.local.md](templates/skills/autodev-review-pr/SKILL.local.md) + [reviewer-spawn-prompt.local.md](templates/skills/autodev-review-pr/reviewer-spawn-prompt.local.md) | PR のコードレビュー（チーム化） |
+| `autodev-review-pr`                 | GitHub: [SKILL.md](templates/skills/autodev-review-pr/SKILL.md) + [reviewer-spawn-prompt.md](templates/skills/autodev-review-pr/reviewer-spawn-prompt.md) / ローカル: [SKILL.local.md](templates/skills/autodev-review-pr/SKILL.local.md) + [reviewer-spawn-prompt.local.md](templates/skills/autodev-review-pr/reviewer-spawn-prompt.local.md) | PR のコードレビュー（レビューのみ） |
 | `autodev-start-new-project`         | [SKILL.md](templates/skills/autodev-start-new-project/SKILL.md)                                                                                                                                                                                                                                                                                 | 長期プロジェクトの開始          |
 | `autodev-start-new-survey`          | [SKILL.md](templates/skills/autodev-start-new-survey/SKILL.md)                                                                                                                                                                                                                                                                                  | 技術調査の開始                  |
 | `autodev-start-new-task`            | [SKILL.md](templates/skills/autodev-start-new-task/SKILL.md)                                                                                                                                                                                                                                                                                    | 個別タスクの開始                |
@@ -178,7 +177,8 @@ disable-model-invocation: true
 
        本文例は選択言語の自然な PR フォーマットに従って見出し・説明を翻訳する（言語によっては `## 目的` を `## Purpose`、`## 概要` 等、慣用に従って調整）。
      - SKILL 本体の地の文（`# PR 作成` などの見出しや手順説明）は **プロジェクトの主要ドキュメント言語のまま** にする（日本語ドキュメントの中で本文例だけが英語になるのが自然）
-3. ユーザーにインストールしたスキルの一覧と、行ったカスタマイズ内容（選択したレビュー形式と PR 言語を含む）を報告する
+3. 既存のインストールに `.claude/skills/autodev-import-review-suggestions/` が残っている場合は、`autodev-start-new-task` の完了フローに統合され廃止されたスキルである旨を伝え、削除するかをユーザーに確認する
+4. ユーザーにインストールしたスキルの一覧と、行ったカスタマイズ内容（選択したレビュー形式と PR 言語を含む）を報告する
 
 ### Step 6: structure.md の生成
 

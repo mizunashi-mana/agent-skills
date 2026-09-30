@@ -47,6 +47,7 @@ Phase 2（品質改善・標準化）と Phase 3（スキル拡充）の並行�
   - [x] autodev-init で PR タイトル・本文の言語を選択可能に（[#17](https://github.com/mizunashi-mana/agent-skills/pull/17), 2026-05-06）
   - [x] PR 作成後に未 push の README 変更を残さない完了フローへ更新（[#18](https://github.com/mizunashi-mana/agent-skills/pull/18), 2026-05-06）
   - [x] autodev-review-pr 完了後に import-review-suggestions を自動チェーン（[#20](https://github.com/mizunashi-mana/agent-skills/pull/20), 2026-05-06）
+  - [x] autodev-review-pr を Agent ツールベース化（レビューのみに限定）、指摘取り込みを start-new-task の完了フローに統合（import-review-suggestions は削除）し、start-new-task のゴールを PR 作成 → レビュー指摘の取り込み → CI 全成功確認まで拡張（2026-09-30）
 
 #### 未着手
 
