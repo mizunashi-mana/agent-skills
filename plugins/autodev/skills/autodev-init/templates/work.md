@@ -46,7 +46,7 @@ GitHub の Review 機能を使ってレビューする。
 
 ローカルの diff を使って Claude がレビューし、結果をファイルに保存する。
 
-`/autodev-review-pr` で reviewer サブエージェントがローカルの diff をレビューして `.ai-agent/tmp/reviews/` に結果を保存し、続けて指摘を取り込んで修正・コミットし、レビューファイルに対応結果を追記する
+`/autodev-review-pr` で reviewer サブエージェントがローカルの diff をレビューして `.ai-agent/tmp/reviews/` に結果を保存し、続けて指摘を取り込んで修正・コミット・push し、レビューファイルに対応結果を追記する
 
 ### 注意事項
 
