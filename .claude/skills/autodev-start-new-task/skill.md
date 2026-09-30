@@ -1,6 +1,6 @@
 ---
 description: Start a new implementation task with branch, README, and structured workflow. Use when beginning a feature, bug fix, or improvement that takes a day to a few days.
-allowed-tools: Read, Write, Edit, MultiEdit, Update, WebSearch, WebFetch, "Bash(git checkout -b *)", "Bash(git status *)", "Bash(git add *)", "Bash(git commit *)", "Bash(git push *)", "Bash(gh pr checks *)", "Bash(gh run view *)", Skill(autodev-create-pr), Skill(autodev-review-pr), Skill(autodev-discussion), Skill(autodev-start-new-survey), Skill(autodev-start-new-project)
+allowed-tools: Read, Write, Edit, MultiEdit, Update, WebSearch, WebFetch, AskUserQuestion, "Bash(git checkout -b *)", "Bash(git status *)", "Bash(git add *)", "Bash(git commit *)", "Bash(git push *)", "Bash(gh pr checks *)", "Bash(gh run view *)", "Bash(gh api *)", Skill(autodev-create-pr), Skill(autodev-review-pr), Skill(autodev-discussion), Skill(autodev-start-new-survey), Skill(autodev-start-new-project)
 ---
 
 # 新規タスク開始
@@ -89,9 +89,9 @@ allowed-tools: Read, Write, Edit, MultiEdit, Update, WebSearch, WebFetch, "Bash(
      - 例: `- [x] PR を作成（\`/autodev-create-pr\`） → https://github.com/<owner>/<repo>/pull/<番号>`
    - `git add` + `git commit` + `git push` で PR ブランチに反映する（レビュー対象の差分とローカルを一致させるため、レビュー前に必ず push する）
 4. **レビューと指摘の取り込み**:
-   - `/autodev-review-pr {PR番号}` を使用する
-   - reviewer サブエージェントによるレビュー → 指摘の分類 → 修正 → コミット + push まで、このスキル内で行われる
-   - 判断が必要な「要確認」の指摘のみユーザーに質問される
+   - `/autodev-review-pr {PR番号}` でレビューを行い、レビュー結果（指摘一覧・推奨アクション・レビュー ID またはレビューファイルの保存先）を受け取る
+   - 指摘が 0 件の場合は手順 5 へ進む
+   - 指摘がある場合は、下記「レビュー指摘の取り込み」に従って分類 → 修正 → コミット + push → 対応結果の記録を行う（判断が必要な「要確認」の指摘のみユーザーに質問する）
 5. **レビュー結果を README に反映してコミット + push**:
    - 完了条件の「レビュー・指摘取り込み」項目をチェックする
    - 作業ログにレビュー結果（推奨アクション、修正件数・スキップ件数とスキップ理由の要約）を記載する
@@ -111,3 +111,75 @@ allowed-tools: Read, Write, Edit, MultiEdit, Update, WebSearch, WebFetch, "Bash(
    - `git status` で未コミット・未 push の変更がないことを確認
 8. **ユーザーに完了報告**:
    - PR URL、レビューの推奨アクション、取り込んだ指摘・スキップした指摘の要約、CI の結果を含めて報告する
+
+## レビュー指摘の取り込み
+
+完了時の手順 4 で `/autodev-review-pr` が返したレビュー結果をもとに、以下を行う。`/autodev-review-pr` はレビューのみを行い修正はしないため、取り込みはこのスキルの責務とする。
+
+### 1. 各指摘の分類
+
+Critical / Warning / Info の各指摘について、修正の要否を判断し、以下の形式で提示する:
+
+```
+**1. ファイル名:行番号 - 概要**
+> 指摘内容の要約
+
+→ **修正推奨/不要/要確認**: 理由
+
+---
+```
+
+判断基準:
+
+- **修正推奨**: バグ修正、セキュリティ改善、アクセシビリティ改善、明らかな UX 改善、テストカバレッジの拡充、プロジェクト規約違反の是正
+- **修正不要（スキップ）**: ユーザーが明示的に決定した設計、プロジェクト方針と異なる提案、過剰な抽象化・将来対応の提案
+- **要確認**: トレードオフがある変更、設計判断が必要な変更
+
+### 2. 要確認の指摘のみユーザーに確認
+
+- 「修正推奨」は確認なしで修正対象とする
+- 「修正不要」は確認なしでスキップする
+- 「要確認」の指摘がある場合のみ、`AskUserQuestion` で修正するかどうかをユーザーに確認する
+
+### 3. 修正実行・コミット・push
+
+- 修正対象の指摘を反映し、まとめてコミットして PR ブランチに push する
+- 修正対象が 0 件の場合はこの手順をスキップする
+
+### 4. 対応結果の記録
+
+レビュー結果の形式に応じて、各指摘への対応結果を記録する。
+
+**GitHub レビューの場合**（レビュー結果にレビュー ID が含まれる）:
+
+1. レビュー ID を使い、行コメントの ID を取得する:
+   ```bash
+   gh api "repos/{owner}/{repo}/pulls/<PR番号>/reviews/<reviewId>/comments" --jq '.[] | {id, path, line, body}'
+   ```
+   - `{owner}/{repo}` は `gh api` が現在のリモートから自動解決する
+2. 各行コメントに返信する:
+   ```bash
+   gh api -X POST "repos/{owner}/{repo}/pulls/<PR番号>/comments/<commentId>/replies" --input - <<'JSON'
+   { "body": "ご指摘の通り修正しました。..." }
+   JSON
+   ```
+   - 修正した項目: 修正内容を簡潔に説明（例: 「修正しました。○○を△△に変更しています。」）
+   - スキップした項目: スキップの理由を説明（例: 「検討しましたが、○○の理由から現状の実装を維持します。」）
+   - 部分的に対応した項目: 対応した部分と見送った部分をそれぞれ説明
+3. 行コメントにしていない指摘（Info など）の対応結果は、必要に応じて PR へのコメントとしてまとめて投稿する:
+   ```bash
+   gh api -X POST "repos/{owner}/{repo}/issues/<PR番号>/comments" --input - <<'JSON'
+   { "body": "レビュー対応: ..." }
+   JSON
+   ```
+
+**ローカルレビューの場合**（レビュー結果にレビューファイルの保存先が含まれる）:
+
+レビューファイルの末尾に、各指摘への対応結果を追記する（`.ai-agent/tmp/` は git 管理外のためコミット不要）:
+
+```markdown
+## 対応結果
+
+- **1. ファイル名:行番号**: 修正済み — ○○を△△に変更
+- **2. ファイル名:行番号**: スキップ — ○○の理由から現状維持
+```

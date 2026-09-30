@@ -27,7 +27,7 @@ agent-skills/
 │       ├── autodev-create-pr/                                  # PR 作成
 │       ├── autodev-discussion/                                 # 対話的アイデア整理
 │       ├── autodev-replan/                                     # ロードマップ再策定
-│       ├── autodev-review-pr/                                  # PR レビュー（サブエージェント）+ 指摘取り込み
+│       ├── autodev-review-pr/                                  # PR レビュー（サブエージェント、レビューのみ）
 │       │   ├── skill.md
 │       │   └── reviewer-spawn-prompt.md
 │       ├── autodev-start-new-project/                          # 長期プロジェクト開始

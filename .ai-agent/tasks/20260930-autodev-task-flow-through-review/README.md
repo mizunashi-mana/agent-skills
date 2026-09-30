@@ -8,16 +8,12 @@
 
 ## 実装方針
 
-### autodev-review-pr（Agent ツールベース化 + 取り込み統合）
+### autodev-review-pr（Agent ツールベース化、レビューのみ）
 
 - TeamCreate / TaskCreate / SendMessage / shutdown_request / TeamDelete の手順を廃止
 - `Agent({ subagent_type: "general-purpose", model: "opus", ... })` で reviewer を起動し、reviewer の最終応答（レビュー結果サマリー）を返り値として受け取る
 - reviewer-spawn-prompt から「lead へのメッセージ送信」「シャットダウン待ち」を削除し、「最終応答として報告フォーマットで返す」に変更
-- 取り込みの手順を review-pr 本体に統合:
-  - 各指摘を 修正推奨 / 不要 / 要確認 に分類して提示
-  - ユーザー承認を得て修正 → コミット → push
-  - GitHub 版: reviewer が投稿した行コメントに対応結果を返信
-  - ローカル版: レビューファイル（`.ai-agent/tmp/reviews/...`）に対応結果を追記
+- レビュー結果（指摘一覧・推奨アクション・レビュー ID または保存先）を報告して終了し、修正・コミット・返信は行わない
 - 対象: `.claude/skills/autodev-review-pr/` と `plugins/autodev/skills/autodev-init/templates/skills/autodev-review-pr/`（GitHub 版 + ローカル版）
 
 ### autodev-import-review-suggestions の削除
@@ -29,14 +25,18 @@
 ### autodev-start-new-task（完了フロー拡張）
 
 - 完了フローに「PR 作成 → PR URL 反映 push → `/autodev-review-pr` でレビュー + 取り込み → 作業ログ更新 push → CI 全成功の確認（失敗時は修正して再 push）→ クリーン確認 → 報告」を追加
-- allowed-tools に `Skill(autodev-review-pr)`、`Bash(gh pr checks *)`、`Bash(gh run view *)` を追加
+- 「レビュー指摘の取り込み」セクションを新設し、review-pr の結果をもとに以下を行う:
+  - 各指摘を 修正推奨 / 不要 / 要確認 に分類し、要確認のみユーザーに確認
+  - 修正 → コミット → push
+  - GitHub レビュー: 行コメントに対応結果を返信 / ローカルレビュー: レビューファイルに対応結果を追記
+- allowed-tools に `AskUserQuestion`、`Skill(autodev-review-pr)`、`Bash(gh pr checks *)`、`Bash(gh run view *)`、`Bash(gh api *)` を追加
 - 対象: `.claude/skills/` とテンプレートの両方
 
 ## 完了条件
 
-- [x] autodev-review-pr（本リポジトリ用 + テンプレート GitHub 版 / ローカル版）が Agent ツールベースで、取り込みまで行う内容になっている
+- [x] autodev-review-pr（本リポジトリ用 + テンプレート GitHub 版 / ローカル版）が Agent ツールベースで、レビューのみ（修正なし）を行う内容になっている
 - [x] autodev-import-review-suggestions が本リポジトリ用・テンプレート双方から削除され、参照が残っていない（agent-coach の過去コマンド名リストを除く）
-- [x] autodev-start-new-task（本リポジトリ用 + テンプレート）の完了フローがレビュー取り込みと CI 全成功の確認までを含む
+- [x] autodev-start-new-task（本リポジトリ用 + テンプレート）の完了フローがレビュー指摘の取り込みと CI 全成功の確認までを含む
 - [x] steering ドキュメント・structure.md・autodev-init SKILL.md・templates/work.md が更新されている
 - [x] `scripts/validate-skills.py` が通る
 - [x] PR を作成（`/autodev-create-pr`） → https://github.com/mizunashi-mana/agent-skills/pull/23
@@ -61,3 +61,4 @@
   - スキップ 2 件: テーブル列幅（表示に影響なし）、`gh api *` 権限の広さ（返信投稿に必要）
   - 追加対応: Agent ツールはバックグラウンド実行されうるため、完了通知を待つ旨を review-pr に追記（実運用で判明）
 - 2026-09-30: CI 全成功（validate skills / CodeQL / Analyze (actions, python) / GitGuardian）。CI 起因の修正なし
+- 2026-09-30: ユーザー要望により方針変更。review-pr はレビューのみに限定し（修正・コミット・返信は行わない）、指摘の取り込み（分類 → 要確認のみ質問 → 修正・コミット・push → 返信 / 対応結果追記）を start-new-task の「レビュー指摘の取り込み」セクションに移設。review-pr の allowed-tools から Write / Edit / git add・commit・push / gh api を削除し、start-new-task に AskUserQuestion / `gh api` を追加
