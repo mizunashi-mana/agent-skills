@@ -21,7 +21,8 @@ allowed-tools: Read, Glob, "Bash(git status *)", "Bash(git log *)", "Bash(git di
 ## 3. 作成
 
 - `.github/PULL_REQUEST_TEMPLATE.md` があれば、本文はそれに沿って書く。
-- タイトルは日本語で簡潔に（50 文字以内を目安）- 本文はヒアドキュメントで渡す（改行が `\n` のまま残らないように）。
+- タイトルは日本語で簡潔に（50 文字以内を目安）
+- 本文はヒアドキュメントで渡す（改行が `\n` のまま残らないように）。
 
 ```bash
 gh pr create --title "<タイトル>" --body-file - <<'BODY'
