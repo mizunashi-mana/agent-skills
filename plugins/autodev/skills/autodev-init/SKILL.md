@@ -111,7 +111,7 @@ disable-model-invocation: true
 - **GitHub レビュー**: GitHub の Review 機能（コメント・Approve・Request Changes）を使ってレビューする。`autodev-start-new-task` が指摘を取り込み、行コメントのスレッドに対応結果を返信して解決する
 - **ローカルレビュー**: ローカルの diff を使って Claude がレビューし、結果をファイル（`.ai-agent/tmp/reviews/`）に保存する。GitHub のレビュー機能は使わない
 
-選択に応じて、`autodev-review-pr` のテンプレートを切り替える（下記テーブル参照）。`autodev-start-new-task` と `autodev-merge-and-switch` は両方の形式の節を持つので、選ばなかった形式の節（「（GitHub レビュー）」または「（ローカルレビュー）」が付いた節）を削り、残した節の見出しから形式名を外す。
+選択に応じて、`autodev-review-pr` のテンプレートを切り替える（下記テーブル参照）。`autodev-start-new-task` と `autodev-merge-and-switch` は両方の形式の節を持つので、選ばなかった形式の節（「（GitHub レビュー）」または「（ローカルレビュー）」が付いた節）を削り、残した節の見出しから形式名を外す。ローカルレビューを選んだときは、両スキルの `allowed-tools` から `Bash(gh api graphql *)`（start-new-task は `Bash(gh pr comment *)` も）を削る。
 
 **ローカルレビューが選択された場合**: `.ai-agent/tmp/` を `.gitignore` に追加する（既に記載されていなければ）。
 

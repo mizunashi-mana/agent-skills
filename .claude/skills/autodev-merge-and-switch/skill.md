@@ -1,7 +1,7 @@
 ---
 description: Merge the current branch's PR once it is pushed, reviewed, and green, then switch back to main, pull, and delete the merged branch. Use when a PR is ready to merge, or already merged, and you want to start the next task from a fresh main.
 disable-model-invocation: true
-allowed-tools: Read, Glob, "Bash(git status *)", "Bash(git branch *)", "Bash(git rev-parse *)", "Bash(git switch *)", "Bash(git pull *)", "Bash(git fetch *)", "Bash(gh pr list *)", "Bash(gh pr view *)", "Bash(gh pr checks *)", "Bash(gh pr merge *)", "Bash(gh run list *)", "Bash(gh run view *)", "Bash(gh api graphql *)"
+allowed-tools: Read, Glob, "Bash(git status *)", "Bash(git branch *)", "Bash(git rev-parse *)", "Bash(git switch *)", "Bash(git pull *)", "Bash(git fetch *)", "Bash(git ls-remote *)", "Bash(gh pr list *)", "Bash(gh pr view *)", "Bash(gh pr checks *)", "Bash(gh pr merge *)", "Bash(gh run list *)", "Bash(gh run view *)", "Bash(gh api graphql *)"
 ---
 
 # マージして main に戻る
@@ -47,7 +47,7 @@ gh pr merge <番号> --merge
 ### レビューの確かめ方
 
 - `gh pr view <番号> --json reviews,reviewDecision` で、`reviews` が 1 件以上あり、`reviewDecision` が `CHANGES_REQUESTED` でない。
-- 最新のレビューの本文で、Critical が 0 件であり、推奨アクションが `REQUEST_CHANGES` でない。`/autodev-review-pr` は自分の PR に `COMMENT` しか付けられず、推奨アクションを本文に書くので、`reviewDecision` だけでは分からない。
+- 本文に `推奨アクション:` を含むレビューのうち最新のもので、Critical が 0 件であり、推奨アクションが `REQUEST_CHANGES` でない。`/autodev-review-pr` は自分の PR に `COMMENT` しか付けられず、推奨アクションを本文に書くので、`reviewDecision` だけでは分からない。スレッドへの返信は本文が空のレビューとして `reviews` に並ぶので、単に最新のレビューを見ると返信を拾ってしまう。
 - スレッドがすべて解決済み。次の一覧に `isResolved` が `false` のものが無い。残っていれば、どの指摘かが分かるように `path`・`line`（null なら `originalLine`）・最初のコメントを挙げて止める。`pageInfo.hasNextPage` が `true` なら 100 件を超えていて見落とすので、そのときも止める。返し忘れた指摘かもしれないので、自分では解決しない。
 
   ```bash
@@ -72,7 +72,7 @@ git pull --ff-only
 git fetch --prune
 ```
 
-- マージ済みのブランチはリモートで自動で消える前提なので、`fetch --prune` で追跡ブランチも消す。
+- マージ済みのブランチはリモートで自動で消える前提なので、`fetch --prune` で追跡ブランチも消す。マージした後も `git ls-remote --heads origin <ブランチ>` でリモートのブランチが残っていれば、自動削除が無効なので、その旨をユーザーに伝える（自分では消さない）。
 
 PR をマージしたとき、または `MERGED` だったときだけ、ローカルのブランチを消す。
 
