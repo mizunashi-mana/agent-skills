@@ -23,7 +23,7 @@
 - [x] `autodev-switch-to-default` への参照が（過去のタスク記録・agent-coach の過去コマンド名・autodev-init の移行案内を除き）残っていない
 - [x] autodev-init SKILL.md・templates/work.md・steering・structure.md が更新されている
 - [x] `scripts/validate-skills.py` が通る
-- [ ] レビューを取り込み CI が通った PR → <URL>
+- [x] レビューを取り込み CI が通った PR → https://github.com/mizunashi-mana/agent-skills/pull/24
 
 ## 作業ログ
 
@@ -36,3 +36,8 @@
   - start-new-task と merge-and-switch のテンプレートは両レビュー形式の節を持ち、autodev-init で使わない方を削る
   - agent-coach の detect-rework-and-violations の「slash command が許可している行動」表に merge-and-switch と新しい start-new-task の行動を追記（過去 transcript 用に旧コマンドの行は残す）
   - `scripts/validate-skills.py`: 22 ファイル、エラー 0
+- 2026-10-13: PR 作成 → https://github.com/mizunashi-mana/agent-skills/pull/24
+- 2026-10-13: `/autodev-review-pr 24` → 推奨アクション COMMENT（Critical 0 / Warning 3 / Info 5）。全件取り込み（fd34699）
+  - W1〜3: merge-and-switch が「最新のレビュー」を見ると、スレッド返信の空レビューを拾う → `推奨アクション:` を含む最新のレビューで判定し、reviewer に総評の先頭へ推奨アクションと件数を必ず書かせる
+  - Info: リモートブランチが残ったときの案内、ローカルレビューの最新ファイルの定義、ローカル時に削る allowed-tools、create-pr の既存 PR 時のプッシュ、CI 待ち前にチェックする理由
+  - 行コメントのスレッドはすべて返信・解決。Info は PR コメントで報告
