@@ -108,10 +108,10 @@ disable-model-invocation: true
 
 スキルインストールの前に、レビュー形式をユーザーに確認する:
 
-- **GitHub レビュー**: GitHub の Review 機能（コメント・Approve・Request Changes）を使ってレビューする。指摘の取り込み（`autodev-start-new-task` の完了フロー内で実施）後、GitHub 上のレビューコメントに対応結果を返信する
+- **GitHub レビュー**: GitHub の Review 機能（コメント・Approve・Request Changes）を使ってレビューする。`autodev-start-new-task` が指摘を取り込み、行コメントのスレッドに対応結果を返信して解決する
 - **ローカルレビュー**: ローカルの diff を使って Claude がレビューし、結果をファイル（`.ai-agent/tmp/reviews/`）に保存する。GitHub のレビュー機能は使わない
 
-選択に応じて、`autodev-review-pr` のテンプレートを切り替える（下記テーブル参照）。
+選択に応じて、`autodev-review-pr` のテンプレートを切り替える（下記テーブル参照）。`autodev-start-new-task` と `autodev-merge-and-switch` は両方の形式の節を持つので、選ばなかった形式の節（「（GitHub レビュー）」または「（ローカルレビュー）」が付いた節）を削り、残した節の見出しから形式名を外す。
 
 **ローカルレビューが選択された場合**: `.ai-agent/tmp/` を `.gitignore` に追加する（既に記載されていなければ）。
 
@@ -140,13 +140,14 @@ disable-model-invocation: true
 | `autodev-start-new-survey`          | [SKILL.md](templates/skills/autodev-start-new-survey/SKILL.md)                                                                                                                                                                                                                                                                                  | 技術調査の開始                  |
 | `autodev-start-new-task`            | [SKILL.md](templates/skills/autodev-start-new-task/SKILL.md)                                                                                                                                                                                                                                                                                    | 個別タスクの開始                |
 | `autodev-steering`                  | [SKILL.md](templates/skills/autodev-steering/SKILL.md)                                                                                                                                                                                                                                                                                          | Steering ドキュメントの更新     |
-| `autodev-switch-to-default`         | [SKILL.md](templates/skills/autodev-switch-to-default/SKILL.md)                                                                                                                                                                                                                                                                                 | デフォルトブランチへの切り替え  |
+| `autodev-merge-and-switch`          | [SKILL.md](templates/skills/autodev-merge-and-switch/SKILL.md)                                                                                                                                                                                                                                                                                  | PR のマージとデフォルトブランチへの切り替え |
 
 #### インストール手順
 
 1. 上記テーブルの各テンプレートリンクからファイルを読み込み、プロジェクトの `.claude/skills/` にコピーする。レビュー形式の選択に応じて、GitHub 版またはローカル版のテンプレートを選ぶ（ローカル版の場合、`SKILL.local.md` を `skill.md` として、`reviewer-spawn-prompt.local.md` を `reviewer-spawn-prompt.md` としてコピーする）
 2. **プロジェクトに特化できる部分はカスタマイズする**。Step 1〜5 で把握した情報を活用して、以下のような点を調整する:
-   - `autodev-start-new-task`: プロジェクト固有の動作確認手順（lint コマンド、テスト実行方法、ブラウザ確認手順など）を追記
+   - `autodev-start-new-task`: 「4. 実装」の確かめ方を、プロジェクト固有の動作確認手順（lint・型検査・テストのコマンド、ブラウザ確認手順など）に置き換え、そのコマンドを `allowed-tools` に足す
+   - デフォルトブランチが `main` でなければ、`autodev-start-new-task`・`autodev-create-pr`・`autodev-merge-and-switch` の `main` を置き換える
    - `autodev-steering`: プロジェクト構成に応じた現状把握コマンド（`ls packages/`、`cat package.json | jq '.scripts'` など）を具体化
    - `autodev-review-pr`: プロジェクト固有のアーキテクチャ規約（レイヤー構造、DI パターンなど）をレビュー観点に追記
    - `autodev-create-pr`:
@@ -159,25 +160,33 @@ disable-model-invocation: true
 
        | 選択言語 | 置換後の本文 |
        | -------- | ------------ |
-       | 日本語   | `PR タイトルは日本語で簡潔に（50文字以内推奨）` |
-       | 英語     | `PR タイトルは English で簡潔に（50文字以内推奨）` |
-       | 中国語   | `PR タイトルは 中文 で簡潔に（50文字以内推奨）` |
+       | 日本語   | `タイトルは日本語で簡潔に（50 文字以内を目安）` |
+       | 英語     | `タイトルは English で簡潔に（50 文字以内を目安）` |
+       | 中国語   | `タイトルは 中文 で簡潔に（50 文字以内を目安）` |
 
      - 置換例（本文例マーカー、英語選択時）:
 
        ```bash
        gh pr create --title "<タイトル>" --body-file - <<'BODY'
        ## Purpose
-       Background and motivation of the change
 
-       ## Summary of Changes
-       - Main changes as bullet points
+       What changes and why.
+
+       ## Changes
+
+       - Main changes
+
+       ## Verification
+
+       - Lint / tests run and their results, including what could not be verified
        BODY
        ```
 
-       本文例は選択言語の自然な PR フォーマットに従って見出し・説明を翻訳する（言語によっては `## 目的` を `## Purpose`、`## 概要` 等、慣用に従って調整）。
-     - SKILL 本体の地の文（`# PR 作成` などの見出しや手順説明）は **プロジェクトの主要ドキュメント言語のまま** にする（日本語ドキュメントの中で本文例だけが英語になるのが自然）
-3. 既存のインストールに `.claude/skills/autodev-import-review-suggestions/` が残っている場合は、`autodev-start-new-task` の完了フローに統合され廃止されたスキルである旨を伝え、削除するかをユーザーに確認する
+       本文例は選択言語の自然な PR フォーマットに従って見出し・説明を翻訳する。
+     - SKILL 本体の地の文（`# PR の作成` などの見出しや手順説明）は **プロジェクトの主要ドキュメント言語のまま** にする（日本語ドキュメントの中で本文例だけが英語になるのが自然）
+3. 既存のインストールに廃止・改名されたスキルが残っている場合は、その旨を伝え、削除するかをユーザーに確認する
+   - `.claude/skills/autodev-import-review-suggestions/`: `autodev-start-new-task` に統合され廃止
+   - `.claude/skills/autodev-switch-to-default/`: `autodev-merge-and-switch` に改名（マージ条件の確認とマージまで行う）
 4. ユーザーにインストールしたスキルの一覧と、行ったカスタマイズ内容（選択したレビュー形式と PR 言語を含む）を報告する
 
 ### Step 6: structure.md の生成

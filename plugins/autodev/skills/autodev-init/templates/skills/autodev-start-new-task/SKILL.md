@@ -1,184 +1,168 @@
 ---
-description: Start a new implementation task with branch, README, and structured workflow. Use when beginning a feature, bug fix, or improvement that takes a day to a few days.
-allowed-tools: Read, Write, Edit, MultiEdit, Update, WebSearch, WebFetch, AskUserQuestion, "Bash(git checkout -b *)", "Bash(git status *)", "Bash(git add *)", "Bash(git commit *)", "Bash(git push *)", "Bash(gh pr checks *)", "Bash(gh run view *)", "Bash(gh api *)", Skill(autodev-create-pr), Skill(autodev-review-pr), Skill(autodev-discussion), Skill(autodev-start-new-survey), Skill(autodev-start-new-project)
+description: Triage a development request and carry it out on a new branch until its PR has been reviewed, the review findings are addressed, and CI passes. Use when beginning a feature, bug fix, or improvement; routes to autodev-discussion, autodev-start-new-survey, or autodev-start-new-project when the request is vague, needs investigation first, or spans multiple PRs.
+allowed-tools: Read, Write, Edit, Glob, Grep, WebSearch, WebFetch, AskUserQuestion, "Bash(git status *)", "Bash(git fetch *)", "Bash(git switch *)", "Bash(git add *)", "Bash(git commit *)", "Bash(git diff *)", "Bash(git log *)", "Bash(git push *)", "Bash(git merge *)", "Bash(git rev-parse *)", "Bash(gh pr comment *)", "Bash(gh pr view *)", "Bash(gh pr checks *)", "Bash(gh run list *)", "Bash(gh run view *)", "Bash(gh api graphql *)", Skill(autodev-create-pr), Skill(autodev-review-pr), Skill(autodev-discussion), Skill(autodev-start-new-survey), Skill(autodev-start-new-project)
 ---
 
-# 新規タスク開始
+# タスクの開始
 
-新しいタスク「$ARGUMENTS」を開始します。
+「$ARGUMENTS」を仕分けし、1 ブランチ・1 PR で進める。
 
-## 手順
+**ゴールは、レビューを取り込み CI が通った PR を作ること。** PR を作った時点でもレビューを受けた時点でもなく、`/autodev-review-pr` の指摘をすべて直すか直さない理由を残し、最後のプッシュの CI が通り、ブランチに未コミット・未プッシュの変更が無い時点で完了とする。
 
-### 1. トリアージ
+ユーザーに確かめるのは、仕分けの行き先、方針、方針に関わる指摘、自力で直せない CI の失敗だけにする。それ以外は聞かずに進める。
 
-`$ARGUMENTS` の内容を分析し、このスキル（start-new-task）で扱うべきタスクかを判断する。
+## 1. 仕分け
 
-**判断基準:**
+依頼を読み、行き先を決める。
 
-| 条件                                         | ルーティング先               | 例                                                        |
-| -------------------------------------------- | ---------------------------- | --------------------------------------------------------- |
-| 要件が曖昧・方向性の整理が必要               | `/autodev-discussion`        | 「開発フローを改善したい」「〇〇をどうにかしたい」        |
-| 技術的な不確実性が高い・調査が先に必要       | `/autodev-start-new-survey`  | 「CI を高速化する方法を検討」「○○ライブラリの比較」       |
-| 複数タスクへの分解が必要（数週間以上の規模） | `/autodev-start-new-project` | 「認証システムを全面リニューアル」「新機能Xの設計〜実装」 |
-| 数時間〜半日で完了する具体的な実装タスク     | **そのまま続行**             | 「バリデーション追加」「設定ファイルの修正」              |
+| 状態                                   | 行き先                       | 例                             |
+| -------------------------------------- | ---------------------------- | ------------------------------ |
+| 何をしたいかがまだはっきりしない       | `/autodev-discussion`        | 「開発フローを改善したい」     |
+| やり方が分からない・比べてから決めたい | `/autodev-start-new-survey`  | 「CI を速くする方法を比べる」  |
+| 複数の PR に分けないと進まない         | `/autodev-start-new-project` | 「認証を全面的に作り直す」     |
+| ゴールと完了条件が書け、1 PR で収まる  | このまま続ける               | 「入力のバリデーションを足す」 |
 
-**そのまま続行する場合の目安:**
+- 別のスキルに回すときは、理由と行き先をユーザーに示し、同意を得てから切り替える。
 
-- ゴールが明確で、完了条件を具体的に書ける
-- 技術的なアプローチが概ね見えている（大きな調査が不要）
-- 1ブランチ・1PR で完結する規模
-- 数時間〜半日で完了する見込み
+## 2. 下調べ
 
-**ルーティングする場合:**
+- `.ai-agent/steering/`（`tech.md`・`plan.md`・`work.md` など）と `.ai-agent/structure.md` のうち、関係するものを読む。
+- 触るコードと、その周りの既存の書き方を確かめる。
+- `.ai-agent/projects/` のタスクなら、プロジェクトの README で依存タスクが終わっているかを確かめ、状態を「進行中」にする。
 
-- ユーザーに判断理由と推奨スキルを提示し、確認を取る
-- タスクディレクトリ（手順 2〜3）が既に作成されている場合は、README の作業ログにトリアージ結果を記録する（例: 「トリアージの結果、`/autodev-discussion` にルーティング。理由: 要件が曖昧で方向性の整理が必要」）
-- ユーザーが承認したら、推奨スキルに切り替える
+## 3. 方針の確認
 
-### 2. タスク名の決定
+次をユーザーに示し、確認を取る。
 
-- `$ARGUMENTS` の内容から適切なタスク名（英語、kebab-case）を考える
-- 簡潔で内容が分かるタスク名にする
+- 目的
+- 方針（何をどう変えるか）
+- 完了条件（確かめ方を含む）
+- ブランチ名（`work.md` の規約どおり `<type>/<kebab-case>`）
 
-### 3. タスクディレクトリ作成
+確認が取れたら、`.ai-agent/tasks/YYYYMMDD-<kebab-case>/README.md` に書く。
 
-`.ai-agent/tasks/YYYYMMDD-{タスク名}/README.md` を作成（YYYYMMDD は今日の日付）
+```markdown
+# <タスク名>
 
-### 4. README.md に以下を記載
+プロジェクト: <.ai-agent/projects/ の README へのリンク。無ければ省く>
 
-- 目的・ゴール
-- 実装方針
-- 完了条件（「PR を作成」「レビュー・指摘取り込み」「CI が全て成功」の項目を必ず含める）
-- 作業ログ（空欄で開始）
+## 目的
 
-### 5. 関連ドキュメント確認
+## 方針
 
-- `.ai-agent/steering/plan.md` で該当フェーズを確認
-- `.ai-agent/steering/tech.md` で技術スタックを確認
-- `.ai-agent/structure.md` でディレクトリ構成を確認
+## 完了条件
 
-### 6. ユーザーに方針を提示して確認を取る
+- [ ] ...
+- [ ] レビューを取り込み CI が通った PR → <URL>
 
-### 7. ブランチ作成（ユーザー確認後）
+## 作業ログ
 
-- `git checkout -b {タスク名}` でブランチを作成
-- そのままブランチ作成することで、タスク内容を引き継ぐ。main の pull は後で良い
-
-### 8. TodoWrite でタスクを細分化
-
-### 9. 実装開始
-
-## 実装中の注意
-
-- 各ステップで動作確認を行う
-- 必要に応じてユーザーにフィードバックをもらう
-
-## 完了時
-
-タスクのゴールは **「PR を作成し、レビュー指摘を取り込み、CI が全て成功したうえで、ブランチに未コミット・未 push の変更が残っていない状態」** とする。PR 作成で止めず、次の順序でレビュー取り込みと CI 確認まで進める。
-
-1. **README に完了条件・作業ログを記載してコミット**:
-   - 完了条件のうち、PR 作成・レビュー・CI の項目はこの時点ではまだチェックしない（PR URL・レビュー結果・CI 結果が未確定のため）
-   - それ以外の完了条件をチェックし、作業ログに結果を記載
-   - 実装変更とまとめて `git add` + `git commit` する（`/autodev-create-pr` は未コミット変更があると先にコミットを促す挙動なので、ここで commit を済ませておく）
-2. **PR を作成**:
-   - `/autodev-create-pr` を使用する（push + PR 作成を行い、PR URL を返す）
-3. **PR URL を README に反映してコミット + push**:
-   - 完了条件の「PR を作成」項目をチェックし、PR URL を併記する
-     - 例: `- [x] PR を作成（\`/autodev-create-pr\`） → https://github.com/<owner>/<repo>/pull/<番号>`
-   - `git add` + `git commit` + `git push` で PR ブランチに反映する（レビュー対象の差分とローカルを一致させるため、レビュー前に必ず push する）
-4. **レビューと指摘の取り込み**:
-   - `/autodev-review-pr {PR番号}` でレビューを行い、レビュー結果（指摘一覧・推奨アクション・レビュー ID またはレビューファイルの保存先）を受け取る
-   - 指摘が 0 件の場合は手順 5 へ進む
-   - 指摘がある場合は、下記「レビュー指摘の取り込み」に従って分類 → 修正 → コミット + push → 対応結果の記録を行う（判断が必要な「要確認」の指摘のみユーザーに質問する）
-5. **レビュー結果を README に反映してコミット + push**:
-   - 完了条件の「レビュー・指摘取り込み」項目をチェックする
-   - 作業ログにレビュー結果（推奨アクション、修正件数・スキップ件数とスキップ理由の要約）を記載する
-   - `git add` + `git commit` + `git push` で PR ブランチに反映する。**このステップは省略しない**（省略するとブランチ上に未 push の変更が残る）
-6. **CI が全て成功したか確認**:
-   - 最後の push に対する CI の完了を `gh pr checks <PR番号> --watch --fail-fast` で待ち、全チェックが成功していることを確認する
-     - `--watch` は CI 完了までブロックするため、Bash ツールの `timeout` を最大（600000ms）に指定して実行する
-     - タイムアウトした場合は失敗とみなさず、`gh pr checks <PR番号>` で現在の状態を確認し、pending が残っていれば再度 `--watch` で待つ
-   - 失敗したチェックがある場合:
-     1. `gh pr checks <PR番号>` で失敗したチェックを特定し、`gh run view <run-id> --log-failed` でログを確認する
-     2. 原因を修正してコミット + push し、再度 CI の完了を待つ（全て成功するまで繰り返す）
-     3. 自力で解決できない失敗（CI 基盤側の障害、権限不足など）はユーザーに報告して判断を仰ぐ
-   - CI が全て成功したら、完了条件の「CI が全て成功」項目をチェックし、作業ログに CI 修正の有無を記載してコミット + push する
-     - この README のみのコミットで CI が再実行される場合も、完了を待って成功を確認する
-   - CI が設定されていないリポジトリ（`gh pr checks` でチェックが 0 件）の場合は、その旨を作業ログに記載してこの手順をスキップする（push 直後はチェックが未登録のことがあるため、0 件のときは `gh pr checks <PR番号> --watch` を再実行するなどして再確認してから判断する）
-7. **ブランチがクリーンか確認**:
-   - `git status` で未コミット・未 push の変更がないことを確認
-8. **ユーザーに完了報告**:
-   - PR URL、レビューの推奨アクション、取り込んだ指摘・スキップした指摘の要約、CI の結果を含めて報告する
-
-## レビュー指摘の取り込み
-
-完了時の手順 4 で `/autodev-review-pr` が返したレビュー結果をもとに、以下を行う。`/autodev-review-pr` はレビューのみを行い修正はしないため、取り込みはこのスキルの責務とする。
-
-### 1. 各指摘の分類
-
-Critical / Warning / Info の各指摘について、修正の要否を判断し、以下の形式で提示する:
-
-```
-**1. ファイル名:行番号 - 概要**
-> 指摘内容の要約
-
-→ **修正推奨/不要/要確認**: 理由
-
----
+- YYYY-MM-DD: 開始
 ```
 
-判断基準:
+- 途中で方針が変わったら README を直し、作業ログに理由を残す。文脈が切れても README から再開できるようにする。
 
-- **修正推奨**: バグ修正、セキュリティ改善、アクセシビリティ改善、明らかな UX 改善、テストカバレッジの拡充、プロジェクト規約違反の是正
-- **修正不要（スキップ）**: ユーザーが明示的に決定した設計、プロジェクト方針と異なる提案、過剰な抽象化・将来対応の提案
-- **要確認**: トレードオフがある変更、設計判断が必要な変更
+## 4. 実装
 
-### 2. 要確認の指摘のみユーザーに確認
+1. `git fetch origin` の後、`git switch -c <ブランチ名> origin/main` でブランチを作る。今居るブランチから切ると前のタスクのまだマージされていないコミットが入るため、必ず `origin/main` を起点にする。
+2. TodoWrite で作業を分け、1 つずつ進める。
+3. 区切りごとに、lint・テストなどプロジェクトで用意されている確かめ方を走らせる。
+4. 意味のまとまりでコミットする。
 
-- 「修正推奨」は確認なしで修正対象とする
-- 「修正不要」は確認なしでスキップする
-- 「要確認」の指摘がある場合のみ、`AskUserQuestion` で修正するかどうかをユーザーに確認する
+## 5. PR とレビュー
 
-### 3. 修正実行・コミット・push
+1. 完了条件を満たしているか確かめる。満たせなかったものは隠さずに挙げる。README の完了条件と作業ログを更新し、実装とまとめてコミットする。
+2. `/autodev-create-pr` で PR を作る。
+3. `/autodev-review-pr <番号>` でレビューする。
+4. 指摘を取り込む。
+   - Critical と Warning は直す。Info は妥当なものを直す。
+   - 直すか迷うもの（方針に関わるもの、トレードオフがあるもの）は AskUserQuestion で聞く。
+   - 直したら確かめ直し、コミットしてプッシュする。PR の本文とずれたら `/autodev-create-pr` で本文を更新する。
+   - 下の「対応結果を残す」で、指摘ごとに直した内容か直さない理由を残す。
+5. Critical を直したときは `/autodev-review-pr` をもう一度走らせ、新しい Critical が無いことを確かめる。2 回目でも Critical が残るときは、止めてユーザーに相談する。
+6. README の最後の完了条件に PR の URL を書いてチェックし、作業ログに取り込んだ指摘と取り込まなかった指摘（理由つき）を残す。コミットしてプッシュし、`git status` でブランチがきれいなことを確かめる。
+7. 下の「CI を待つ」で、最後のプッシュの CI が通るまで待つ。
+8. PR の URL、確かめた結果（CI の結果を含む）、取り込んだ指摘と取り込まなかった指摘をユーザーに報告する。
 
-- 修正対象の指摘を反映し、まとめてコミットして PR ブランチに push する
-- 修正対象が 0 件の場合はこの手順をスキップする
+## 対応結果を残す（GitHub レビュー）
 
-### 4. 対応結果の記録
+- 行コメントの指摘には、そのスレッドに返信する。直したものは直した内容とコミットを、直さないものは理由を書く。返信したらスレッドを解決する。ユーザーに聞いている指摘のスレッドは、答えが出るまで解決しない。
+- 総評にまとめられた Info のうち直さないものは、理由を PR のコメント（`gh pr comment`）に書く。
+- 手順 6 の前にスレッドの一覧を取り直し、`isResolved` が `false` のスレッドが無いことを確かめる。残っていれば返し忘れなので返信して解決する。
 
-レビュー結果の形式に応じて、各指摘への対応結果を記録する。
+スレッドの一覧は次で取る。`pageInfo.hasNextPage` が `true` なら 100 件を超えていて見落とすので、止めてユーザーに伝える。直してコードが変わったスレッドは `line` が null になるので、`originalLine` で場所を見る。
 
-**GitHub レビューの場合**（レビュー結果にレビュー ID が含まれる）:
+```bash
+gh api graphql -F owner='{owner}' -F repo='{repo}' -F number=<番号> -f query='
+query($owner: String!, $repo: String!, $number: Int!) {
+  repository(owner: $owner, name: $repo) {
+    pullRequest(number: $number) {
+      reviewThreads(first: 100) {
+        pageInfo { hasNextPage }
+        nodes { id isResolved isOutdated path line originalLine comments(first: 1) { nodes { body } } }
+      }
+    }
+  }
+}' --jq '.data.repository.pullRequest.reviewThreads'
+```
 
-1. レビュー ID を使い、行コメントの ID を取得する:
-   ```bash
-   gh api "repos/{owner}/{repo}/pulls/<PR番号>/reviews/<reviewId>/comments" --jq '.[] | {id, path, line, body}'
-   ```
-   - `{owner}/{repo}` は `gh api` が現在のリモートから自動解決する
-2. 各行コメントに返信する:
-   ```bash
-   gh api -X POST "repos/{owner}/{repo}/pulls/<PR番号>/comments/<commentId>/replies" --input - <<'JSON'
-   { "body": "ご指摘の通り修正しました。..." }
-   JSON
-   ```
-   - 修正した項目: 修正内容を簡潔に説明（例: 「修正しました。○○を△△に変更しています。」）
-   - スキップした項目: スキップの理由を説明（例: 「検討しましたが、○○の理由から現状の実装を維持します。」）
-   - 部分的に対応した項目: 対応した部分と見送った部分をそれぞれ説明
-3. 行コメントにしていない指摘（Info など）の対応結果は、必要に応じて PR へのコメントとしてまとめて投稿する:
-   ```bash
-   gh api -X POST "repos/{owner}/{repo}/issues/<PR番号>/comments" --input - <<'JSON'
-   { "body": "レビュー対応: ..." }
-   JSON
-   ```
+返信と解決は次のとおり。返信の本文は、引用符や改行で壊れないように標準入力から渡す。
 
-**ローカルレビューの場合**（レビュー結果にレビューファイルの保存先が含まれる）:
+```bash
+gh api graphql -F id=<スレッドの id> -F body=@- -f query='
+mutation($id: ID!, $body: String!) {
+  addPullRequestReviewThreadReply(input: { pullRequestReviewThreadId: $id, body: $body }) { comment { url } }
+}' <<'BODY'
+<返信>
+BODY
+gh api graphql -F id=<スレッドの id> -f query='
+mutation($id: ID!) { resolveReviewThread(input: { threadId: $id }) { thread { isResolved } } }'
+```
 
-レビューファイルの末尾に、各指摘への対応結果を追記する（`.ai-agent/tmp/` は git 管理外のためコミット不要）:
+## 対応結果を残す（ローカルレビュー）
+
+`/autodev-review-pr` が返したレビューファイル（`.ai-agent/tmp/reviews/...`）の末尾に、指摘ごとの対応結果を追記する。`.ai-agent/tmp/` は git 管理外なのでコミットしない。
 
 ```markdown
 ## 対応結果
 
-- **1. ファイル名:行番号**: 修正済み — ○○を△△に変更
-- **2. ファイル名:行番号**: スキップ — ○○の理由から現状維持
+- **1. path:line**: 修正済み — 何をどう直したか（コミット）
+- **2. path:line**: 直さない — 理由
 ```
+
+## CI を待つ
+
+CI が終わる前に報告しない。ローカルで通っていても、CI だけで落ちることがある。
+
+1. CI が終わるまで待つ。Bash の `timeout` を上限の `600000`（10 分）にして走らせる。
+
+   ```bash
+   gh pr checks <番号> --watch --interval 30
+   ```
+
+   - 終了コードが 0 なら通っている。
+   - 時間切れで終わったら、もう 1 回走らせる。合わせて 30 分待っても終わらなければ、下の「CI が終わらないとき」で調べる。
+   - 出力に `fail` の行があれば落ちている。2 へ進む。
+   - `no checks reported` で終わったら、run がまだ登録されていない（プッシュの直後に起きる）。`gh run list --commit "$(git rev-parse HEAD)" --json databaseId --jq length` で run の件数を見て、1 以上になったら走らせ直す。4 回見ても 0 のままで、`.github/workflows/` も無ければ CI が無いとみなし、作業ログに書いて終える。workflow があるなら「CI が終わらないとき」で調べる。
+   - それ以外で 0 以外の終了コードなら API のエラーなので、走らせ直す。
+
+2. 落ちたら直す。`fail` のチェックの URL の `runs/<run の id>` について `gh run view <run の id> --log-failed` でログを見る。ローカルで再現させて直し、確かめ直す。README の作業ログに落ちた理由と直し方を足し、修正とまとめてコミットしてプッシュし、1 からやり直す。ローカルで再現しない、または直し方が方針に関わるときは、ユーザーに聞く。
+
+### CI が終わらないとき
+
+原因を調べ、見立てをユーザーに伝えて止める（衝突だけは直してよい）。run の再実行（`gh run rerun`）や取り消し（`gh run cancel`）は、見立てを伝えてユーザーに確かめてから行う。
+
+1. `gh pr view <番号> --json mergeable,headRefOid` で PR の状態を見る。
+   - `mergeable` が `CONFLICTING`: main と衝突していると `pull_request` の workflow は起動しない。`git merge origin/main` で取り込んで衝突を解き、確かめ直してプッシュし、「CI を待つ」の 1 からやり直す。
+   - `headRefOid` が `git rev-parse HEAD` と違う: プッシュが届いていない。
+2. 最後のコミットの run と、終わっていないジョブ・ステップを見る。
+
+   ```bash
+   gh run list --commit "$(git rev-parse HEAD)" --json databaseId,name,status,conclusion,createdAt
+   gh run view <run の id> --json jobs --jq '.jobs[] | select(.status != "completed") | {name, status, startedAt, steps: [.steps[] | select(.status != "completed") | .name]}'
+   ```
+
+3. 見立てる。
+   - run が無い、またはジョブが無いまま `failure` で終わっている: workflow の YAML の書き誤りか、Actions が止められている。
+   - ジョブが `queued` のまま: ランナーが割り当てられていない。`gh run list --status queued` でほかの run も詰まっていないか、[GitHub の障害情報](https://www.githubstatus.com) を見る。
+   - ジョブが `in_progress` で同じステップから進まない: そのステップ（サービスの起動待ち、テストのハングなど）を疑う。

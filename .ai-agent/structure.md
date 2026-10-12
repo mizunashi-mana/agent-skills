@@ -26,15 +26,15 @@ agent-skills/
 │       ├── autodev-create-issue/                               # GitHub Issue 作成
 │       ├── autodev-create-pr/                                  # PR 作成
 │       ├── autodev-discussion/                                 # 対話的アイデア整理
+│       ├── autodev-merge-and-switch/                           # PR のマージとデフォルトブランチへの切り替え
 │       ├── autodev-replan/                                     # ロードマップ再策定
 │       ├── autodev-review-pr/                                  # PR レビュー（サブエージェント、レビューのみ）
 │       │   ├── skill.md
 │       │   └── reviewer-spawn-prompt.md
 │       ├── autodev-start-new-project/                          # 長期プロジェクト開始
 │       ├── autodev-start-new-survey/                           # 技術調査開始
-│       ├── autodev-start-new-task/                             # タスク開始（トリアージ付き）
+│       ├── autodev-start-new-task/                             # タスク開始（トリアージ〜レビュー取り込み・CI 成功まで）
 │       ├── autodev-steering/                                   # steering ドキュメント更新
-│       ├── autodev-switch-to-default/                          # デフォルトブランチ切り替え
 │       ├── detect-context-rot/                                 # → plugins/agent-coach/.../SKILL.md への symlink（本リポジトリ自体での試用）
 │       ├── detect-missed-skill-triggers/                       # → plugins/agent-coach/.../SKILL.md への symlink（本リポジトリ自体での試用）
 │       ├── detect-rework-and-violations/                       # → plugins/agent-coach/.../SKILL.md への symlink（本リポジトリ自体での試用）
@@ -55,13 +55,13 @@ agent-skills/
 │   │                   ├── autodev-create-issue/
 │   │                   ├── autodev-create-pr/
 │   │                   ├── autodev-discussion/
+│   │                   ├── autodev-merge-and-switch/
 │   │                   ├── autodev-replan/
 │   │                   ├── autodev-review-pr/                  # GitHub 版 + .local.md + reviewer-spawn-prompt
 │   │                   ├── autodev-start-new-project/
 │   │                   ├── autodev-start-new-survey/
 │   │                   ├── autodev-start-new-task/
-│   │                   ├── autodev-steering/
-│   │                   └── autodev-switch-to-default/
+│   │                   └── autodev-steering/
 │   ├── merge-dependabot-bump-pr/                               # merge-dependabot-bump-pr プラグイン
 │   │   ├── .claude-plugin/plugin.json
 │   │   └── skills/

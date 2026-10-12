@@ -161,10 +161,11 @@ b277cc6e   main                                    /autodev-start-new-task「rec
 | slash command | 許可される行動 |
 | --- | --- |
 | `/autodev-create-pr` | `git add` / `git commit` / `git push -u` / `gh pr create` |
-| `/autodev-start-new-task` | `git checkout -b <task-name>`、タスクディレクトリ・README.md の `Write` |
+| `/autodev-start-new-task` | `git checkout -b` / `git switch -c`、タスクディレクトリ・README.md の `Write`、実装の `Edit` / `Write` / `git commit` / `git push`、`/autodev-create-pr` / `/autodev-review-pr` の呼び出し、レビュー指摘に対する修正とスレッドへの返信・解決 |
 | `/autodev-import-review-suggestions` | レビュー指摘に対するファイル `Edit` / `Write` |
 | `/autodev-replan` / `/autodev-steering` | 該当ドキュメントの `Edit` / `Write` |
 | `/autodev-switch-to-default` | `git checkout main` / `git pull` |
+| `/autodev-merge-and-switch` | `gh pr merge --merge` / `git switch main` / `git pull` / `git fetch --prune` / `git branch -d` |
 
 **4.2.1 を入れずに違反検出を回すと `/autodev-create-pr` 経由のコミットを毎回違反として誤報告する**（実測: 試用時に 14 件中 10 件が当該誤検出）。violation 候補ごとに「直前 slash command フレーム」と「template 内でのアクション許可有無」を 1 行で記録し、レポートの判定根拠に書き出す。
 
