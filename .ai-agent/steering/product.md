@@ -23,7 +23,6 @@ AI エージェント駆動のソフトウェア開発ワークフローを、�
 
 - **autodev-create-issue**: GitHub Issue の作成（Bug Report/Feature Request/Problem テンプレート）
 - **autodev-create-pr**: プルリクエストの作成
-- **autodev-discussion**: アイデアや考えの対話的な整理
 - **autodev-replan**: ロードマップの再策定
 - **autodev-review-pr**: PR コードレビュー（サブエージェント、GitHub/ローカル両対応。レビューのみで修正は行わない）
 - **autodev-start-project**: 長期プロジェクトの開始

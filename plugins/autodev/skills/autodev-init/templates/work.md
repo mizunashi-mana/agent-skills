@@ -61,7 +61,7 @@ GitHub の Review 機能を使ってレビューする。
 
 `/autodev-start-task` が次を 1 本の流れで行う。
 
-1. 仕分け（discussion / survey / project に回すか）と下調べ
+1. 仕分け（はっきりしない要件の確認、survey / project に回すか）と下調べ
 2. 方針（目的・方針・完了条件・ブランチ名）をユーザーに確認し、タスクの README を作成
 3. ブランチを作り、区切りごとに lint / テストで確かめながら実装・コミット
 4. PR を作成（`/autodev-create-pr`）し、レビュー（`/autodev-review-pr`）

@@ -1,6 +1,6 @@
 ---
-description: Triage a development request and carry it out on a new branch until its PR has been reviewed, the review findings are addressed, and CI passes. Use when beginning a feature, bug fix, or improvement; routes to autodev-discussion, autodev-start-survey, or autodev-start-project when the request is vague, needs investigation first, or spans multiple PRs.
-allowed-tools: Read, Write, Edit, Glob, Grep, WebSearch, WebFetch, AskUserQuestion, "Bash(python3 scripts/validate-skills.py*)", "Bash(git status *)", "Bash(git fetch *)", "Bash(git switch *)", "Bash(git add *)", "Bash(git commit *)", "Bash(git diff *)", "Bash(git log *)", "Bash(git push *)", "Bash(git merge *)", "Bash(git rev-parse *)", "Bash(gh pr comment *)", "Bash(gh pr view *)", "Bash(gh pr checks *)", "Bash(gh run list *)", "Bash(gh run view *)", "Bash(gh api graphql *)", Skill(autodev-create-pr), Skill(autodev-review-pr), Skill(autodev-discussion), Skill(autodev-start-survey), Skill(autodev-start-project)
+description: Triage a development request and carry it out on a new branch until its PR has been reviewed, the review findings are addressed, and CI passes. Use when beginning a feature, bug fix, or improvement; routes to autodev-start-survey or autodev-start-project when the request needs investigation first or spans multiple PRs.
+allowed-tools: Read, Write, Edit, Glob, Grep, WebSearch, WebFetch, AskUserQuestion, "Bash(python3 scripts/validate-skills.py*)", "Bash(git status *)", "Bash(git fetch *)", "Bash(git switch *)", "Bash(git add *)", "Bash(git commit *)", "Bash(git diff *)", "Bash(git log *)", "Bash(git push *)", "Bash(git merge *)", "Bash(git rev-parse *)", "Bash(gh pr comment *)", "Bash(gh pr view *)", "Bash(gh pr checks *)", "Bash(gh run list *)", "Bash(gh run view *)", "Bash(gh api graphql *)", Skill(autodev-create-pr), Skill(autodev-review-pr), Skill(autodev-start-survey), Skill(autodev-start-project)
 ---
 
 # タスクの開始
@@ -9,7 +9,7 @@ allowed-tools: Read, Write, Edit, Glob, Grep, WebSearch, WebFetch, AskUserQuesti
 
 **ゴールは、レビューを取り込み CI が通った PR を作ること。** PR を作った時点でもレビューを受けた時点でもなく、`/autodev-review-pr` の指摘をすべて直すか直さない理由を残し、最後のプッシュの CI が通り、ブランチに未コミット・未プッシュの変更が無い時点で完了とする。
 
-ユーザーに確かめるのは、仕分けの行き先、方針、方針に関わる指摘、自力で直せない CI の失敗だけにする。それ以外は聞かずに進める。
+ユーザーに確かめるのは、はっきりしない要件、仕分けの行き先、方針、方針に関わる指摘、自力で直せない CI の失敗だけにする。それ以外は聞かずに進める。
 
 ## 1. 仕分け
 
@@ -17,11 +17,11 @@ allowed-tools: Read, Write, Edit, Glob, Grep, WebSearch, WebFetch, AskUserQuesti
 
 | 状態                                   | 行き先                       | 例                             |
 | -------------------------------------- | ---------------------------- | ------------------------------ |
-| 何をしたいかがまだはっきりしない       | `/autodev-discussion`        | 「開発フローを改善したい」     |
 | やり方が分からない・比べてから決めたい | `/autodev-start-survey`  | 「CI を速くする方法を比べる」  |
 | 複数の PR に分けないと進まない         | `/autodev-start-project` | 「認証を全面的に作り直す」     |
 | ゴールと完了条件が書け、1 PR で収まる  | このまま続ける               | 「入力のバリデーションを足す」 |
 
+- 何をしたいかがまだはっきりしないときは、行き先を決める前に AskUserQuestion で聞いて、ゴールと完了条件を固める。
 - 別のスキルに回すときは、理由と行き先をユーザーに示し、同意を得てから切り替える。
 
 ## 2. 下調べ

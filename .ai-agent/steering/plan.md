@@ -48,7 +48,7 @@ Phase 2（品質改善・標準化）と Phase 3（スキル拡充）の並行�
   - [x] PR 作成後に未 push の README 変更を残さない完了フローへ更新（[#18](https://github.com/mizunashi-mana/agent-skills/pull/18), 2026-05-06）
   - [x] autodev-review-pr 完了後に import-review-suggestions を自動チェーン（[#20](https://github.com/mizunashi-mana/agent-skills/pull/20), 2026-05-06）
   - [x] autodev-review-pr を Agent ツールベース化（レビューのみに限定）、指摘取り込みを start-new-task の完了フローに統合（import-review-suggestions は削除）し、start-new-task のゴールを PR 作成 → レビュー指摘の取り込み → CI 全成功確認まで拡張（2026-09-30）
-  - [x] autodev のワークフロースキルを自律化・簡潔化（start-task でスレッドへの返信・解決と CI 待ちまで自走、switch-to-default を merge-and-switch に改名してマージ条件の確認とマージを追加、start-new-* を start-* に改名）（2026-10-13）
+  - [x] autodev のワークフロースキルを自律化・簡潔化（start-task でスレッドへの返信・解決と CI 待ちまで自走、switch-to-default を merge-and-switch に改名してマージ条件の確認とマージを追加、start-new-* を start-* に改名、discussion を廃止）（2026-10-13）
 
 #### 未着手
 
