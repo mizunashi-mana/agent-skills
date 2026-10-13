@@ -1,6 +1,6 @@
 ---
-description: Triage a development request and carry it out on a new branch until its PR has been reviewed, the review findings are addressed, and CI passes. Use when beginning a feature, bug fix, or improvement; routes to autodev-discussion, autodev-start-new-survey, or autodev-start-new-project when the request is vague, needs investigation first, or spans multiple PRs.
-allowed-tools: Read, Write, Edit, Glob, Grep, WebSearch, WebFetch, AskUserQuestion, "Bash(python3 scripts/validate-skills.py*)", "Bash(git status *)", "Bash(git fetch *)", "Bash(git switch *)", "Bash(git add *)", "Bash(git commit *)", "Bash(git diff *)", "Bash(git log *)", "Bash(git push *)", "Bash(git merge *)", "Bash(git rev-parse *)", "Bash(gh pr comment *)", "Bash(gh pr view *)", "Bash(gh pr checks *)", "Bash(gh run list *)", "Bash(gh run view *)", "Bash(gh api graphql *)", Skill(autodev-create-pr), Skill(autodev-review-pr), Skill(autodev-discussion), Skill(autodev-start-new-survey), Skill(autodev-start-new-project)
+description: Triage a development request and carry it out on a new branch until its PR has been reviewed, the review findings are addressed, and CI passes. Use when beginning a feature, bug fix, or improvement; routes to autodev-discussion, autodev-start-survey, or autodev-start-project when the request is vague, needs investigation first, or spans multiple PRs.
+allowed-tools: Read, Write, Edit, Glob, Grep, WebSearch, WebFetch, AskUserQuestion, "Bash(git status *)", "Bash(git fetch *)", "Bash(git switch *)", "Bash(git add *)", "Bash(git commit *)", "Bash(git diff *)", "Bash(git log *)", "Bash(git push *)", "Bash(git merge *)", "Bash(git rev-parse *)", "Bash(gh pr comment *)", "Bash(gh pr view *)", "Bash(gh pr checks *)", "Bash(gh run list *)", "Bash(gh run view *)", "Bash(gh api graphql *)", Skill(autodev-create-pr), Skill(autodev-review-pr), Skill(autodev-discussion), Skill(autodev-start-survey), Skill(autodev-start-project)
 ---
 
 # タスクの開始
@@ -18,8 +18,8 @@ allowed-tools: Read, Write, Edit, Glob, Grep, WebSearch, WebFetch, AskUserQuesti
 | 状態                                   | 行き先                       | 例                             |
 | -------------------------------------- | ---------------------------- | ------------------------------ |
 | 何をしたいかがまだはっきりしない       | `/autodev-discussion`        | 「開発フローを改善したい」     |
-| やり方が分からない・比べてから決めたい | `/autodev-start-new-survey`  | 「CI を速くする方法を比べる」  |
-| 複数の PR に分けないと進まない         | `/autodev-start-new-project` | 「認証を全面的に作り直す」     |
+| やり方が分からない・比べてから決めたい | `/autodev-start-survey`  | 「CI を速くする方法を比べる」  |
+| 複数の PR に分けないと進まない         | `/autodev-start-project` | 「認証を全面的に作り直す」     |
 | ゴールと完了条件が書け、1 PR で収まる  | このまま続ける               | 「入力のバリデーションを足す」 |
 
 - 別のスキルに回すときは、理由と行き先をユーザーに示し、同意を得てから切り替える。
@@ -66,9 +66,7 @@ allowed-tools: Read, Write, Edit, Glob, Grep, WebSearch, WebFetch, AskUserQuesti
 
 1. `git fetch origin` の後、`git switch -c <ブランチ名> origin/main` でブランチを作る。今居るブランチから切ると前のタスクのまだマージされていないコミットが入るため、必ず `origin/main` を起点にする。
 2. TodoWrite で作業を分け、1 つずつ進める。
-3. 区切りごとに確かめる:
-   - `python3 scripts/validate-skills.py`（SKILL.md のフロントマターと plugin / marketplace の JSON）
-   - スキルを変えたら、テンプレート（`plugins/autodev/skills/autodev-init/templates/skills/`）と本リポジトリ用（`.claude/skills/`）の両方に反映したか、参照パスが正しいか
+3. 区切りごとに、lint・テストなどプロジェクトで用意されている確かめ方を走らせる。
 4. 意味のまとまりでコミットする。
 
 ## 5. PR とレビュー
@@ -86,7 +84,7 @@ allowed-tools: Read, Write, Edit, Glob, Grep, WebSearch, WebFetch, AskUserQuesti
 7. 下の「CI を待つ」で、最後のプッシュの CI が通るまで待つ。
 8. PR の URL、確かめた結果（CI の結果を含む）、取り込んだ指摘と取り込まなかった指摘をユーザーに報告する。
 
-## 対応結果を残す
+## 対応結果を残す（GitHub レビュー）
 
 - 行コメントの指摘には、そのスレッドに返信する。直したものは直した内容とコミットを、直さないものは理由を書く。返信したらスレッドを解決する。ユーザーに聞いている指摘のスレッドは、答えが出るまで解決しない。
 - 総評にまとめられた Info のうち直さないものは、理由を PR のコメント（`gh pr comment`）に書く。
@@ -119,6 +117,17 @@ mutation($id: ID!, $body: String!) {
 BODY
 gh api graphql -F id=<スレッドの id> -f query='
 mutation($id: ID!) { resolveReviewThread(input: { threadId: $id }) { thread { isResolved } } }'
+```
+
+## 対応結果を残す（ローカルレビュー）
+
+`/autodev-review-pr` が返したレビューファイル（`.ai-agent/tmp/reviews/...`）の末尾に、指摘ごとの対応結果を追記する。`.ai-agent/tmp/` は git 管理外なのでコミットしない。
+
+```markdown
+## 対応結果
+
+- **1. path:line**: 修正済み — 何をどう直したか（コミット）
+- **2. path:line**: 直さない — 理由
 ```
 
 ## CI を待つ

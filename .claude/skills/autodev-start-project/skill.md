@@ -1,6 +1,6 @@
 ---
 description: Break a large goal into PR-sized tasks with dependencies and record it in .ai-agent/projects/. Use when planning a large feature, refactoring, or multi-week initiative that spans multiple PRs.
-allowed-tools: Read, Write, Edit, Glob, Grep, WebSearch, WebFetch, AskUserQuestion, "Bash(mkdir *)", Skill(autodev-start-new-task), Skill(autodev-start-new-survey)
+allowed-tools: Read, Write, Edit, Glob, Grep, WebSearch, WebFetch, AskUserQuestion, "Bash(mkdir *)", Skill(autodev-start-task), Skill(autodev-start-survey)
 ---
 
 # プロジェクトの開始
@@ -14,8 +14,8 @@ allowed-tools: Read, Write, Edit, Glob, Grep, WebSearch, WebFetch, AskUserQuesti
 
 ## 2. 分ける
 
-- 各タスクは `/autodev-start-new-task` で 1 PR に収まる大きさにする。
-- 先に調べないと分けられない部分は、調査タスク（`/autodev-start-new-survey`）として置く。
+- 各タスクは `/autodev-start-task` で 1 PR に収まる大きさにする。
+- 先に調べないと分けられない部分は、調査タスク（`/autodev-start-survey`）として置く。
 - 依存を書き、循環が無いこと、依存なしで着手できるタスクがあることを確かめる。
 
 ## 3. 書く
@@ -55,6 +55,6 @@ allowed-tools: Read, Write, Edit, Glob, Grep, WebSearch, WebFetch, AskUserQuesti
 
 ## 5. 進め方
 
-- タスクは `/autodev-start-new-task T1 <タスク名>` のように ID を添えて始める。タスクの README からこの README へリンクする。
+- タスクは `/autodev-start-task T1 <タスク名>` のように ID を添えて始める。タスクの README からこの README へリンクする。
 - タスクを始めたら状態を「進行中」に、PR を作ったら PR の URL を、マージされたら「完了」にし、経過に 1 行足す。
 - 全タスクが終わったら目標を満たしたかを確かめ、経過に完了を記録して、ユーザーに報告する。

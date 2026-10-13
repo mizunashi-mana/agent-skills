@@ -24,7 +24,7 @@ allowed-tools: Read, Glob, "Bash(git status *)", "Bash(git branch *)", "Bash(git
 - プッシュ済み: `gh pr view <番号> --json isDraft,mergeable,headRefOid` の `headRefOid` が `git rev-parse HEAD` と同じ。
 - 下書きでない: `isDraft` が `false`。
 - 衝突が無い: `mergeable` が `MERGEABLE`。プッシュの直後は `UNKNOWN` のことがあるので、そのときは少し待って取り直す。
-- レビュー済みで Critical が残っていない: 下の「レビューの確かめ方」で確かめる。最新のレビューが古いコミットに付いていても止めない。Warning と Info の取り込みはレビューの後に行い、Critical を直したときは `/autodev-start-new-task` がレビューをやり直すため。
+- レビュー済みで Critical が残っていない: 下の「レビューの確かめ方」で確かめる。最新のレビューが古いコミットに付いていても止めない。Warning と Info の取り込みはレビューの後に行い、Critical を直したときは `/autodev-start-task` がレビューをやり直すため。
 - CI が落ちていない: `gh pr checks <番号>` に失敗が無い。実行中のものがあっても、ここでは止めない。
 
 満たしていれば、CI が終わるまで待つ。Bash の `timeout` を上限の `600000`（10 分）にして走らせる。

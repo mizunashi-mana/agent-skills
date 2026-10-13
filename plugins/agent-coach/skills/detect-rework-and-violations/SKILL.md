@@ -47,7 +47,7 @@ allowed-tools: Bash, Read, Write, Glob, Grep
 
 抽出ロジック（優先順位順、最初に見つかったものを採用）:
 
-1. **`<command-name>/autodev-start-new-task</command-name>` または類似の topic-defining コマンド**（`/autodev-start-new-project`, `/autodev-start-new-survey`, `/autodev-discussion`, `/autodev-create-issue`, `/autodev-replan`, `/autodev-steering`, `/init`）の `<command-args>` 内容 → `「<args 抜粋 80 字>」`
+1. **`<command-name>/autodev-start-task</command-name>`（旧名 `/autodev-start-new-task`）または類似の topic-defining コマンド**（`/autodev-start-project`, `/autodev-start-survey`, 旧名の `/autodev-start-new-project`, `/autodev-start-new-survey`, `/autodev-discussion`, `/autodev-create-issue`, `/autodev-replan`, `/autodev-steering`, `/init`）の `<command-args>` 内容 → `「<args 抜粋 80 字>」`
 2. **`<command-name>/autodev-create-pr</command-name>` または `/autodev-import-review-suggestions` / `/autodev-review-pr`** → `<command> (branch: <branch 名>)` （branch から topic を推測）
 3. その他の `<command-name>`（`/detect-context-rot`, `/recommend-bash-allowlist`, `/security-review`, `/review` 等）→ コマンド名を topic とする
 4. 自由入力の最初の user 発話（`Base directory for this skill:` で始まるテンプレ本文や `<bash-*>` / `<local-command-*>` で始まるブロックは除外）→ 冒頭 80 字
@@ -141,7 +141,7 @@ b277cc6e   main                                    /autodev-start-new-task「rec
 | 「コメントは書かない」 | 新規コード追加で `//`, `#` コメント挿入 |
 | 「README は要求時のみ」 | `*.md` の `Write` 新規作成（要求なし） |
 | skill description Use when ... | 該当ケースで Skill ツール未呼び出し（generic 実装） |
-| **template が「`/<other-skill>` を起動する」と指示している** | 該当文脈で `<command-name>/<other-skill></command-name>` も `Base directory for this skill: .../<other-skill>` も無く、generic 実装で代替している（**トリガミス + ルール埋没の複合違反**。例: `/autodev-start-new-task` が「PR は `/autodev-create-pr` を使用する」と指示しているのに直接 `git commit` + `gh pr create` を実行） |
+| **template が「`/<other-skill>` を起動する」と指示している** | 該当文脈で `<command-name>/<other-skill></command-name>` も `Base directory for this skill: .../<other-skill>` も無く、generic 実装で代替している（**トリガミス + ルール埋没の複合違反**。例: `/autodev-start-task` が「PR は `/autodev-create-pr` を使用する」と指示しているのに直接 `git commit` + `gh pr create` を実行） |
 
 ##### 4.2.1 slash command コンテキストガード（**必須**）
 
@@ -161,7 +161,7 @@ b277cc6e   main                                    /autodev-start-new-task「rec
 | slash command | 許可される行動 |
 | --- | --- |
 | `/autodev-create-pr` | `git add` / `git commit` / `git push -u` / `gh pr create` |
-| `/autodev-start-new-task` | `git checkout -b` / `git switch -c`、タスクディレクトリ・README.md の `Write`、実装の `Edit` / `Write` / `git commit` / `git push`、`/autodev-create-pr` / `/autodev-review-pr` の呼び出し、レビュー指摘に対する修正とスレッドへの返信・解決 |
+| `/autodev-start-task`（旧名 `/autodev-start-new-task`） | `git checkout -b` / `git switch -c`、タスクディレクトリ・README.md の `Write`、実装の `Edit` / `Write` / `git commit` / `git push`、`/autodev-create-pr` / `/autodev-review-pr` の呼び出し、レビュー指摘に対する修正とスレッドへの返信・解決 |
 | `/autodev-import-review-suggestions` | レビュー指摘に対するファイル `Edit` / `Write` |
 | `/autodev-replan` / `/autodev-steering` | 該当ドキュメントの `Edit` / `Write` |
 | `/autodev-switch-to-default` | `git checkout main` / `git pull` |
@@ -381,7 +381,7 @@ description: <既存の説明>. Use when <user-keyword-1>, <user-keyword-2>, or 
 
 | セッション | branch | topic（要約） |
 | --- | --- | --- |
-| `<id1>` | main | /autodev-start-new-task「<引数抜粋>」 |
+| `<id1>` | main | /autodev-start-task「<引数抜粋>」 |
 | `<id2>` | feature/... | /autodev-create-pr (branch: ...) |
 | ... | ... | ... |
 

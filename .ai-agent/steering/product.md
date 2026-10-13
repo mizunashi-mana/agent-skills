@@ -26,9 +26,9 @@ AI エージェント駆動のソフトウェア開発ワークフローを、�
 - **autodev-discussion**: アイデアや考えの対話的な整理
 - **autodev-replan**: ロードマップの再策定
 - **autodev-review-pr**: PR コードレビュー（サブエージェント、GitHub/ローカル両対応。レビューのみで修正は行わない）
-- **autodev-start-new-project**: 長期プロジェクトの開始
-- **autodev-start-new-survey**: 技術調査の開始
-- **autodev-start-new-task**: 個別タスクの開始（トリアージ付き）から PR 作成・レビュー指摘の取り込み（スレッドへの返信・解決）・CI 成功の確認まで自走
+- **autodev-start-project**: 長期プロジェクトの開始
+- **autodev-start-survey**: 技術調査の開始
+- **autodev-start-task**: 個別タスクの開始（トリアージ付き）から PR 作成・レビュー指摘の取り込み（スレッドへの返信・解決）・CI 成功の確認まで自走
 - **autodev-steering**: steering ドキュメントの更新
 - **autodev-merge-and-switch**: マージ条件（レビュー済み・Critical なし・スレッド解決済み・CI 成功）を確かめて PR をマージし、デフォルトブランチに戻る
 

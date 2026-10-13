@@ -1,6 +1,6 @@
 ---
 description: Start a technical survey and write the findings to .ai-agent/surveys/. Use when comparing libraries or approaches, checking feasibility, investigating a problem, or analyzing trends before deciding how to implement.
-allowed-tools: Read, Write, Edit, Glob, Grep, WebSearch, WebFetch, AskUserQuestion, "Bash(mkdir *)", Skill(autodev-start-new-task)
+allowed-tools: Read, Write, Edit, Glob, Grep, WebSearch, WebFetch, AskUserQuestion, "Bash(mkdir *)", Skill(autodev-start-task)
 ---
 
 # 調査の開始
@@ -58,4 +58,4 @@ allowed-tools: Read, Write, Edit, Glob, Grep, WebSearch, WebFetch, AskUserQuesti
 ## 5. 報告
 
 - 結論と推す案をユーザーに要約して伝える。
-- 次の一手を提案する: `/autodev-start-new-task` で実装に移る、steering に反映する、追加で調べる。
+- 次の一手を提案する: `/autodev-start-task` で実装に移る、steering に反映する、追加で調べる。

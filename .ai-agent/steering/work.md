@@ -24,7 +24,7 @@
 
 1. **ブランチ作成**: `git fetch origin` の後、`git switch -c {ブランチ名} origin/main` で作成
 2. **実装・コミット**: 小さな単位でコミットを積み重ねる
-3. **PR 作成・レビュー**: `/autodev-start-new-task` が PR 作成・レビュー・指摘の取り込み・CI 成功の確認まで行う
+3. **PR 作成・レビュー**: `/autodev-start-task` が PR 作成・レビュー・指摘の取り込み・CI 成功の確認まで行う
 4. **マージ・切り替え**: `/autodev-merge-and-switch` でマージ条件を確かめてマージ（マージコミット方式）し、デフォルトブランチに戻る
 
 ### 注意事項

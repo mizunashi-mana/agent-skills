@@ -28,7 +28,7 @@
 
 1. **ブランチ作成**: `git fetch origin` の後、`git switch -c {ブランチ名} origin/{デフォルトブランチ}` で作成（前のタスクの未マージのコミットを持ち込まない）
 2. **実装・コミット**: 小さな単位でコミットを積み重ねる
-3. **PR 作成・レビュー**: `/autodev-start-new-task` が `/autodev-create-pr` で PR を作り、`/autodev-review-pr` でレビューし、指摘を取り込んで CI の成功まで確かめる
+3. **PR 作成・レビュー**: `/autodev-start-task` が `/autodev-create-pr` で PR を作り、`/autodev-review-pr` でレビューし、指摘を取り込んで CI の成功まで確かめる
 4. **マージ・切り替え**: ユーザーが `/autodev-merge-and-switch` を呼び、マージ条件を確かめてマージし、デフォルトブランチに戻る
 
 ### レビュー形式
@@ -40,14 +40,14 @@
 GitHub の Review 機能を使ってレビューする。
 
 1. `/autodev-review-pr` で reviewer サブエージェントが GitHub にレビューコメントを投稿する（レビューのみ）
-2. `/autodev-start-new-task` が指摘を取り込んで修正・push し、行コメントのスレッドに対応結果を返信して解決する
+2. `/autodev-start-task` が指摘を取り込んで修正・push し、行コメントのスレッドに対応結果を返信して解決する
 
 #### ローカルレビュー
 
 ローカルの diff を使って Claude がレビューし、結果をファイルに保存する。
 
 1. `/autodev-review-pr` で reviewer サブエージェントがローカルの diff をレビューし、`.ai-agent/tmp/reviews/` に結果を保存する（レビューのみ）
-2. `/autodev-start-new-task` が指摘を取り込んで修正・コミット・push し、レビューファイルに対応結果を追記する
+2. `/autodev-start-task` が指摘を取り込んで修正・コミット・push し、レビューファイルに対応結果を追記する
 
 人間のレビュアーが後から付けたコメント、`/autodev-review-pr` を単体で実行したときの指摘、セッションをまたいで取り込みを再開する場合は、専用のスキルを使わず、会話の中で個別に対応する（修正・push・コメントへの返信を依頼する）。
 
@@ -59,7 +59,7 @@ GitHub の Review 機能を使ってレビューする。
 
 ## タスク実行フロー
 
-`/autodev-start-new-task` が次を 1 本の流れで行う。
+`/autodev-start-task` が次を 1 本の流れで行う。
 
 1. 仕分け（discussion / survey / project に回すか）と下調べ
 2. 方針（目的・方針・完了条件・ブランチ名）をユーザーに確認し、タスクの README を作成
