@@ -250,6 +250,7 @@ def cluster_cross_session(all_instr_with_session):
 
 ```python
 TOPIC_COMMANDS = {
+    "/autodev-start-task", "/autodev-start-project", "/autodev-start-survey",
     "/autodev-start-new-task", "/autodev-start-new-project", "/autodev-start-new-survey",
     "/autodev-discussion", "/autodev-create-issue",
     "/autodev-replan", "/autodev-steering", "/init",

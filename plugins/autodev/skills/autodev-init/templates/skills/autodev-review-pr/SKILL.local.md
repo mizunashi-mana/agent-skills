@@ -1,57 +1,36 @@
 ---
-description: Review the current branch's changes locally using a reviewer subagent in a clean context and report the findings (review only, no fixes). Use when you want an unbiased code review without the current conversation's context influencing the review.
-allowed-tools: Read, Write, Edit, Glob, Grep, AskUserQuestion, Agent, WebSearch, "Bash(git branch --show-current)", "Bash(git status *)", "Bash(git diff *)", "Bash(mkdir *)", "Bash(gh pr list *)", "Bash(gh pr view *)"
+description: Review the current branch's changes locally with a reviewer subagent in a clean context and save the result to a file (review only, no fixes). Use after creating a PR, or when you want an unbiased code review without the current conversation's context influencing it.
+allowed-tools: Read, Write, Glob, Grep, WebSearch, AskUserQuestion, Agent, "Bash(git branch --show-current)", "Bash(git status *)", "Bash(git diff *)", "Bash(mkdir *)", "Bash(gh pr list *)", "Bash(gh pr view *)"
 ---
 
-# ローカルレビュー
+# PR のレビュー（ローカル）
 
-現在のブランチの変更を、クリーンなコンテキストの reviewer サブエージェントでローカルレビューし、結果を報告します。このスキルはレビューのみを行い、指摘に基づく修正は行いません。
+PR「$ARGUMENTS」の変更を、今の会話の文脈を持たない reviewer にローカルで見させる。このスキルはレビューだけを行い、直さない。
 
-## 手順
+## 1. 対象の特定
 
-### 1. 対象 PR の特定
+- `$ARGUMENTS` に番号があればそれを使う。
+- 無ければ `gh pr list --head $(git branch --show-current) --json number --limit 1` で探す。見つからなければユーザーに聞く。
+- `git status --short --untracked-files=no` で、未コミットの変更が無いかを確かめる。あればレビューする差分に入らないので、先にコミットするかを聞く。
 
-- `$ARGUMENTS` が指定されている場合: その PR 番号を使用
-- `$ARGUMENTS` が空の場合:
-  1. `git branch --show-current` で現在のブランチ名を取得
-  2. `gh pr list --head <branch-name> --json number --limit 1` で該当ブランチの PR 番号を検索
-  3. PR が見つからない場合はユーザーに PR 番号の指定を求める
+## 2. reviewer の起動
 
-### 2. 未コミットの変更がないか確認
-
-- `git status --short --untracked-files=no` で、追跡ファイルの未コミット変更がないことを確認する（未追跡ファイルは無視してよい）
-- 残っている場合は、レビュー対象の差分に含まれないため、先にコミットするかユーザーに確認する
-
-### 3. Reviewer サブエージェントの起動
-
-`.claude/skills/autodev-review-pr/reviewer-spawn-prompt.md` を読み込み、`{PR_NUMBER}` をレビュー対象の PR 番号に置換して prompt として使用する。
+同じディレクトリの [reviewer-spawn-prompt.md](reviewer-spawn-prompt.md) を読み、`{PR_NUMBER}` を置き換えて Agent に渡す。
 
 ```
 Agent({
   description: "Review PR #{PR番号}",
-  prompt: "{reviewer-spawn-prompt.md の内容（{PR_NUMBER} を置換済み）}",
   subagent_type: "general-purpose",
-  model: "opus"
+  model: "opus",
+  prompt: "<reviewer-spawn-prompt.md の内容>"
 })
 ```
 
-reviewer はレビュー結果を `.ai-agent/tmp/reviews/YYYYMMDD-pr-{PR番号}/REVIEW-{連番}.md` に保存し、最終応答としてレビュー結果（指摘一覧・推奨アクション・保存先パス）を返す。Agent ツールの返り値（バックグラウンド実行された場合は完了通知で届く最終報告）がそのままレビュー結果になるため、メッセージのやり取りやシャットダウン処理は不要。バックグラウンド実行の場合は、完了通知が届くまで結果を推測せずに待つ。
+- 会話で分かっている意図や事情をプロンプトに足さない。PR の本文とコードだけから読めるかを見るため。
+- Agent がバックグラウンドで走ったときは、完了の通知が届くまで結果を推測せずに待つ。
 
-### 4. 結果報告
+## 3. 報告
 
-reviewer のレビュー結果を報告して終了する。報告には以下を含める:
-
-- Critical / Warning / Info の各指摘（ファイル名・行番号・問題・修正案）
-- 推奨アクション
-- レビューファイルの保存先パス
-
-指摘の取り込み（修正・コミット・対応結果の追記）は呼び出し元が行う。`/autodev-start-new-task` から呼ばれた場合は、同スキルの「レビュー指摘の取り込み」手順で処理される。単体で実行した場合は、報告を受けてユーザーと会話の中で個別に対応する。
-
-## 注意事項
-
-- reviewer は clean context で動作するため、現在の会話の文脈に影響されない公正なレビューが可能
-- reviewer は steering docs（tech.md, structure.md 等）を自分で読み込んでレビューする
-- 大きな PR でも reviewer が段階的にレビューする
-- レビュー結果は `.ai-agent/tmp/reviews/YYYYMMDD-pr-{PR番号}/REVIEW-{連番}.md` に保存される
-- このスキルはレビュー対象コードの修正・コミットを行わない
-- allowed-tools の `Write` / `Edit` / `Bash(mkdir *)` は reviewer がレビューファイル（`.ai-agent/tmp/reviews/...`）を作成・書き込むため、`Bash(git diff *)` / `WebSearch` は差分取得・技術情報の確認に使うためのもの
+- reviewer の結果（指摘の件数と中身、推奨アクション、レビューファイルの保存先）をユーザーに伝える。
+- `/autodev-start-task` から呼ばれたときは、指摘の取り込みは `/autodev-start-task` が続けて行う。
+- 単独で呼ばれて指摘があれば、どれを直すかをユーザーに聞く。直すときは同じブランチでコミットし、レビューファイルに対応結果を追記する。
