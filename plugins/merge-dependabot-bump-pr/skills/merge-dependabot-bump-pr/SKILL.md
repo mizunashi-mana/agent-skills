@@ -44,7 +44,7 @@ PR 情報から以下を抽出:
 - `gh release view <tag> --repo <owner>/<repo> --json tagName,name,publishedAt,body` でリリース情報を取得
   - 最新リリースだけ確認したい場合は `gh release view --repo <owner>/<repo> --json ...` （`<tag>` 省略）
   - GitHub Actions の場合: タグ名は `v{version}` 形式が多い
-- リリース日（`publishedAt`）から現在までの経過日数を計算
+- リリース日（`publishedAt`）から現在までの経過日数を計算（経過時間を 24 時間単位で切り捨てた日数。2 日 23 時間なら 2 日）
 - **判定**:
   - 3日以上経過: PASS
   - 3日未満: WARN（「リリースから {N}日 しか経過していません」）
